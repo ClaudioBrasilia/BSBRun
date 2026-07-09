@@ -50,18 +50,18 @@ export default function HomePage() {
             Plataforma completa para coaches e atletas. Planos personalizados baseados no VDOT,
             periodização inteligente e fortalecimento preventivo.
           </p>
-          <div className="flex gap-4 justify-center">
+          <div className="flex flex-wrap gap-4 justify-center">
             <Link
-              href="/coach/dashboard"
+              href="/login"
               className="px-8 py-4 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl transition-all hover:scale-105 shadow-lg shadow-primary/30"
             >
-              Sou Coach
+              Entrar como Coach
             </Link>
             <Link
-              href="/athlete/dashboard"
+              href="/calculator"
               className="px-8 py-4 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-xl transition-all hover:scale-105"
             >
-              Sou Atleta
+              Calculadora de VDOT
             </Link>
           </div>
         </motion.div>

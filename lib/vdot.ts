@@ -45,9 +45,11 @@ export function predictTime(vdot: number, targetDistanceM: number): number {
     if (Math.abs(vdotEst - vdot) < 0.005) {
       return mid;
     } else if (vdotEst > vdot) {
-      hi = mid;
-    } else {
+      // vdotEst alto demais => tempo curto demais => precisa de mais tempo
       lo = mid;
+    } else {
+      // vdotEst baixo demais => tempo longo demais => precisa de menos tempo
+      hi = mid;
     }
   }
 
