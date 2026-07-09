@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, Trash2, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Trash2, TrendingUp, CalendarRange } from 'lucide-react';
 import { getAthlete, getVdotHistory } from '@/lib/data/athletes';
 import { getTrainingPaces, getPerformanceEquivalences } from '@/lib/vdot';
 import { formatSeconds } from '@/lib/time';
@@ -48,16 +48,27 @@ export default async function AthleteDetailPage({ params }: { params: { id: stri
               .join(' • ') || 'Sem dados adicionais'}
           </p>
         </div>
-        <form action={deleteAthlete}>
-          <input type="hidden" name="id" value={athlete.id} />
-          <button
-            type="submit"
-            className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition-all text-sm"
-          >
-            <Trash2 className="w-4 h-4" />
-            Excluir
-          </button>
-        </form>
+        <div className="flex items-center gap-3">
+          {athlete.vdot && (
+            <Link
+              href={`/coach/athletes/${athlete.id}/plan`}
+              className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-xl transition-all text-sm font-semibold"
+            >
+              <CalendarRange className="w-4 h-4" />
+              Gerar plano
+            </Link>
+          )}
+          <form action={deleteAthlete}>
+            <input type="hidden" name="id" value={athlete.id} />
+            <button
+              type="submit"
+              className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition-all text-sm"
+            >
+              <Trash2 className="w-4 h-4" />
+              Excluir
+            </button>
+          </form>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
