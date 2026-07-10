@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, TrendingUp, CalendarRange } from 'lucide-react';
+import { ArrowLeft, TrendingUp, CalendarRange, Pencil } from 'lucide-react';
 import { getAthlete, getVdotHistory } from '@/lib/data/athletes';
 import { getTrainingPaces, getPerformanceEquivalences } from '@/lib/vdot';
 import { formatSeconds } from '@/lib/time';
@@ -43,6 +43,9 @@ export default async function AthleteDetailPage({ params }: { params: { id: stri
               athlete.experience,
               athlete.age ? `${athlete.age} anos` : null,
               athlete.goal_distance ? `Objetivo: ${athlete.goal_distance}` : null,
+              athlete.weekly_km ? `${athlete.weekly_km} km/sem` : null,
+              athlete.days_per_week ? `${athlete.days_per_week}x/sem` : null,
+              athlete.goal_date ? `Prova: ${new Date(athlete.goal_date).toLocaleDateString('pt-BR')}` : null,
             ]
               .filter(Boolean)
               .join(' • ') || 'Sem dados adicionais'}
@@ -58,6 +61,13 @@ export default async function AthleteDetailPage({ params }: { params: { id: stri
               Gerar plano
             </Link>
           )}
+          <Link
+            href={`/coach/athletes/${athlete.id}/edit`}
+            className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl transition-all text-sm font-semibold"
+          >
+            <Pencil className="w-4 h-4" />
+            Editar
+          </Link>
           <DeleteAthleteButton id={athlete.id} name={athlete.name} variant="full" />
         </div>
       </div>

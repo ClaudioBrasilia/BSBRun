@@ -25,13 +25,15 @@ export default async function AthletesPage() {
           <h1 className="text-3xl font-bold text-white">Atletas</h1>
           <p className="text-slate-400 mt-1">Gerencie os atletas que você treina</p>
         </div>
-        <Link
-          href="/coach/athletes/new"
-          className="flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl transition-all hover:scale-105"
-        >
-          <Plus className="w-5 h-5" />
-          Novo Atleta
-        </Link>
+        {athletes.length > 0 && (
+          <Link
+            href="/coach/athletes/new"
+            className="flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl transition-all hover:scale-105"
+          >
+            <Plus className="w-5 h-5" />
+            Novo Atleta
+          </Link>
+        )}
       </div>
 
       {athletes.length === 0 ? (

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Users, TrendingUp, Activity, Plus, ArrowRight } from 'lucide-react';
+import { Users, TrendingUp, Activity, Plus } from 'lucide-react';
 import { getAthletes } from '@/lib/data/athletes';
 
 export const dynamic = 'force-dynamic';
@@ -36,7 +36,7 @@ export default async function CoachDashboard() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {stats.map((stat) => (
           <div key={stat.label} className="glass rounded-2xl p-6">
             <div className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center mb-4`}>
@@ -47,23 +47,6 @@ export default async function CoachDashboard() {
           </div>
         ))}
       </div>
-
-      <Link
-        href="/coach/athletes"
-        className="glass rounded-2xl p-6 flex items-center justify-between hover:bg-slate-800/40 transition-all"
-      >
-        <div>
-          <h2 className="text-lg font-bold text-white">
-            {athletes.length === 0 ? 'Cadastre seu primeiro atleta' : 'Ver todos os atletas'}
-          </h2>
-          <p className="text-sm text-slate-400 mt-1">
-            {athletes.length === 0
-              ? 'Ainda não há nenhum atleta na sua conta.'
-              : `${athletes.length} atleta${athletes.length > 1 ? 's' : ''} sob sua orientação.`}
-          </p>
-        </div>
-        <ArrowRight className="w-5 h-5 text-slate-400" />
-      </Link>
     </>
   );
 }
