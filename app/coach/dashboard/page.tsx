@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Users, TrendingUp, Activity, Plus, Dumbbell } from 'lucide-react';
+import { Users, TrendingUp, Activity, Plus, ArrowRight } from 'lucide-react';
 import { getAthletes } from '@/lib/data/athletes';
 
 export const dynamic = 'force-dynamic';
@@ -22,7 +22,7 @@ export default async function CoachDashboard() {
 
   return (
     <>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold text-white">Painel do Coach</h1>
           <p className="text-slate-400 mt-1">Resumo dos seus atletas</p>
@@ -48,51 +48,22 @@ export default async function CoachDashboard() {
         ))}
       </div>
 
-      <div className="glass rounded-2xl p-6">
-        <h2 className="text-xl font-bold text-white mb-4">Atletas</h2>
-
-        {athletes.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Dumbbell className="w-8 h-8 text-slate-500" />
-            </div>
-            <p className="text-slate-400 mb-6">Você ainda não cadastrou nenhum atleta.</p>
-            <Link
-              href="/coach/athletes/new"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl transition-all"
-            >
-              <Plus className="w-5 h-5" />
-              Cadastrar primeiro atleta
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {athletes.map((athlete) => (
-              <Link
-                key={athlete.id}
-                href={`/coach/athletes/${athlete.id}`}
-                className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl hover:bg-slate-800 transition-all"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-primary to-emerald-600 rounded-full flex items-center justify-center text-white font-bold">
-                    {athlete.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <div className="font-semibold text-white">{athlete.name}</div>
-                    <div className="text-sm text-slate-400">
-                      {athlete.goal_distance ? `Objetivo: ${athlete.goal_distance}` : 'Sem objetivo definido'}
-                    </div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-primary">{athlete.vdot ?? '—'}</div>
-                  <div className="text-xs text-slate-400">VDOT</div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
+      <Link
+        href="/coach/athletes"
+        className="glass rounded-2xl p-6 flex items-center justify-between hover:bg-slate-800/40 transition-all"
+      >
+        <div>
+          <h2 className="text-lg font-bold text-white">
+            {athletes.length === 0 ? 'Cadastre seu primeiro atleta' : 'Ver todos os atletas'}
+          </h2>
+          <p className="text-sm text-slate-400 mt-1">
+            {athletes.length === 0
+              ? 'Ainda não há nenhum atleta na sua conta.'
+              : `${athletes.length} atleta${athletes.length > 1 ? 's' : ''} sob sua orientação.`}
+          </p>
+        </div>
+        <ArrowRight className="w-5 h-5 text-slate-400" />
+      </Link>
     </>
   );
 }

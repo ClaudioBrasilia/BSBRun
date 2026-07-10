@@ -1,10 +1,10 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, Trash2, TrendingUp, CalendarRange } from 'lucide-react';
+import { ArrowLeft, TrendingUp, CalendarRange } from 'lucide-react';
 import { getAthlete, getVdotHistory } from '@/lib/data/athletes';
 import { getTrainingPaces, getPerformanceEquivalences } from '@/lib/vdot';
 import { formatSeconds } from '@/lib/time';
-import { deleteAthlete } from '../actions';
+import { DeleteAthleteButton } from '@/components/DeleteAthleteButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -58,16 +58,7 @@ export default async function AthleteDetailPage({ params }: { params: { id: stri
               Gerar plano
             </Link>
           )}
-          <form action={deleteAthlete}>
-            <input type="hidden" name="id" value={athlete.id} />
-            <button
-              type="submit"
-              className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition-all text-sm"
-            >
-              <Trash2 className="w-4 h-4" />
-              Excluir
-            </button>
-          </form>
+          <DeleteAthleteButton id={athlete.id} name={athlete.name} variant="full" />
         </div>
       </div>
 
