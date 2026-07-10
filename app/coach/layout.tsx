@@ -33,7 +33,7 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <CoachSidebar />
-      <main className="ml-64 p-8">{children}</main>
+      <main className="md:ml-64 px-4 pt-20 pb-8 md:p-8">{children}</main>
     </div>
   );
 }
