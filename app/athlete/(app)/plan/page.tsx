@@ -21,6 +21,7 @@ export default async function MyPlanPage() {
       backHref="/athlete/dashboard"
       backLabel="Voltar ao painel"
       title="Meu Plano de Treino"
+      scope="currentWeek"
     />
   );
 }

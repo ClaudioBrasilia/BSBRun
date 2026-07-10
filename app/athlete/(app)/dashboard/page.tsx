@@ -64,8 +64,8 @@ export default async function AthleteDashboardPage() {
               <CalendarRange className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <div className="font-bold text-white">Ver meu plano de treino</div>
-              <div className="text-sm text-slate-400">Semanas, ritmos e treinos de qualidade</div>
+              <div className="font-bold text-white">Ver treino da semana</div>
+              <div className="text-sm text-slate-400">Seus treinos de hoje até domingo, com ritmos</div>
             </div>
           </div>
           <ArrowRight className="w-5 h-5 text-slate-400" />
