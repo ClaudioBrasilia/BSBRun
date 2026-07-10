@@ -26,6 +26,14 @@ export function parseTimeToSeconds(input: string): number | null {
   return seconds > 0 ? seconds : null;
 }
 
+/** Dias entre agora e a data informada (negativo se já passou). Retorna null se a data for inválida/ausente. */
+export function daysUntilDate(dateStr: string | null | undefined): number | null {
+  if (!dateStr) return null;
+  const target = new Date(dateStr).getTime();
+  if (Number.isNaN(target)) return null;
+  return Math.ceil((target - Date.now()) / (24 * 3600 * 1000));
+}
+
 /** Formata segundos em "mm:ss" ou "h:mm:ss". */
 export function formatSeconds(totalSeconds: number): string {
   const s = Math.round(totalSeconds);
