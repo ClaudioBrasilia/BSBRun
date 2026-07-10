@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { Search, Calendar, Activity, ArrowUpDown } from 'lucide-react';
-import { daysUntilDate } from '@/lib/time';
+import { daysUntilDate, formatCountdown } from '@/lib/time';
 import { DeleteAthleteButton } from '@/components/DeleteAthleteButton';
 import type { AthleteRow } from '@/lib/supabase/types';
 
@@ -14,13 +14,6 @@ const sortOptions: { value: SortKey; label: string }[] = [
   { value: 'vdot', label: 'Maior VDOT' },
   { value: 'name', label: 'Nome (A-Z)' },
 ];
-
-function formatCountdown(days: number | null): string | null {
-  if (days === null) return null;
-  if (days < 0) return 'prova já passou';
-  if (days === 0) return 'prova é hoje!';
-  return `faltam ${days} dia${days > 1 ? 's' : ''}`;
-}
 
 export function AthletesList({ athletes }: { athletes: AthleteRow[] }) {
   const [search, setSearch] = useState('');

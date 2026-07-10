@@ -179,6 +179,16 @@ export async function registerNewRace(
   redirect(`/coach/athletes/${id}`);
 }
 
+/** Gera (ou renova) o link de convite do atleta para criar a própria conta. */
+export async function generateInviteLink(id: string, _formData: FormData) {
+  const supabase = createClient();
+  const code = crypto.randomUUID();
+
+  await supabase.from('athletes').update({ invite_code: code }).eq('id', id);
+
+  revalidatePath(`/coach/athletes/${id}`);
+}
+
 export async function deleteAthlete(formData: FormData) {
   const id = String(formData.get('id') ?? '');
   if (!id) return;

@@ -27,6 +27,23 @@ export async function getAthlete(id: string): Promise<AthleteRow | null> {
   return data as AthleteRow;
 }
 
+/** Perfil de atleta vinculado ao usuário logado (login próprio do atleta). */
+export async function getMyAthleteProfile(): Promise<AthleteRow | null> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return null;
+
+  const { data, error } = await supabase.from('athletes').select('*').eq('user_id', user.id).single();
+
+  if (error) {
+    return null;
+  }
+  return data as AthleteRow;
+}
+
 /** Histórico de VDOT de um atleta, mais recente primeiro. */
 export async function getVdotHistory(athleteId: string): Promise<VdotHistoryRow[]> {
   const supabase = createClient();

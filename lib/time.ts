@@ -34,6 +34,14 @@ export function daysUntilDate(dateStr: string | null | undefined): number | null
   return Math.ceil((target - Date.now()) / (24 * 3600 * 1000));
 }
 
+/** Texto amigável de contagem regressiva a partir do número de dias (ver daysUntilDate). */
+export function formatCountdown(days: number | null): string | null {
+  if (days === null) return null;
+  if (days < 0) return 'prova já passou';
+  if (days === 0) return 'prova é hoje!';
+  return `faltam ${days} dia${days > 1 ? 's' : ''}`;
+}
+
 /** Formata segundos em "mm:ss" ou "h:mm:ss". */
 export function formatSeconds(totalSeconds: number): string {
   const s = Math.round(totalSeconds);

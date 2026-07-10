@@ -5,6 +5,7 @@ import { getAthlete, getVdotHistory } from '@/lib/data/athletes';
 import { getTrainingPaces, getPerformanceEquivalences } from '@/lib/vdot';
 import { formatSeconds } from '@/lib/time';
 import { DeleteAthleteButton } from '@/components/DeleteAthleteButton';
+import { InviteAthleteCard } from '@/components/InviteAthleteCard';
 
 export const dynamic = 'force-dynamic';
 
@@ -150,6 +151,14 @@ export default async function AthleteDetailPage({ params }: { params: { id: stri
           <p className="text-slate-300 text-sm whitespace-pre-wrap">{athlete.notes}</p>
         </div>
       )}
+
+      <div className="mt-8">
+        <InviteAthleteCard
+          athleteId={athlete.id}
+          inviteCode={athlete.invite_code}
+          linked={Boolean(athlete.user_id)}
+        />
+      </div>
     </>
   );
 }

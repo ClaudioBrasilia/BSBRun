@@ -25,7 +25,7 @@ function SubmitButton() {
 function LoginForm() {
   const [state, formAction] = useFormState<AuthResult, FormData>(login, {});
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirectTo') ?? '/coach/dashboard';
+  const redirectTo = searchParams.get('redirectTo') ?? '';
 
   return (
     <form action={formAction} className="space-y-4">

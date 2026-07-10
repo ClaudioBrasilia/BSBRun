@@ -17,6 +17,10 @@ export interface Profile {
 export interface AthleteRow {
   id: string;
   coach_id: string;
+  /** Preenchido quando o atleta cria a própria conta e vincula via convite. */
+  user_id: string | null;
+  /** Código de convite pendente (nulo depois que o atleta vincula a conta). */
+  invite_code: string | null;
   name: string;
   sex: Sex | null;
   age: number | null;
@@ -55,7 +59,13 @@ export interface WorkoutRow {
   created_at: string;
 }
 
-export type AthleteInsert = Omit<AthleteRow, 'id' | 'created_at' | 'updated_at'>;
+export type AthleteInsert = Omit<
+  AthleteRow,
+  'id' | 'created_at' | 'updated_at' | 'user_id' | 'invite_code'
+> & {
+  user_id?: string | null;
+  invite_code?: string | null;
+};
 export type AthleteUpdate = Partial<AthleteInsert>;
 
 export interface Database {

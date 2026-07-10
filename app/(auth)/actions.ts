@@ -17,17 +17,23 @@ export async function login(_prev: AuthResult, formData: FormData): Promise<Auth
 
   const email = String(formData.get('email') ?? '').trim();
   const password = String(formData.get('password') ?? '');
-  const redirectTo = String(formData.get('redirectTo') ?? '/coach/dashboard') || '/coach/dashboard';
+  const explicitRedirect = String(formData.get('redirectTo') ?? '').trim();
 
   if (!email || !password) {
     return { error: 'Informe e-mail e senha.' };
   }
 
   const supabase = createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-  if (error) {
+  if (error || !data.user) {
     return { error: 'E-mail ou senha inválidos.' };
+  }
+
+  let redirectTo = explicitRedirect;
+  if (!redirectTo) {
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).single();
+    redirectTo = profile?.role === 'athlete' ? '/athlete/dashboard' : '/coach/dashboard';
   }
 
   revalidatePath('/', 'layout');

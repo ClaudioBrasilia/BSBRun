@@ -33,21 +33,22 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isProtected = request.nextUrl.pathname.startsWith('/coach');
-  const isAuthPage =
-    request.nextUrl.pathname.startsWith('/login') ||
-    request.nextUrl.pathname.startsWith('/signup');
+  const pathname = request.nextUrl.pathname;
+  const isAthleteJoin = pathname.startsWith('/athlete/join');
+  const isProtected = (pathname.startsWith('/coach') || pathname.startsWith('/athlete')) && !isAthleteJoin;
+  const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup');
 
   if (!user && isProtected) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
-    url.searchParams.set('redirectTo', request.nextUrl.pathname);
+    url.searchParams.set('redirectTo', pathname);
     return NextResponse.redirect(url);
   }
 
   if (user && isAuthPage) {
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
     const url = request.nextUrl.clone();
-    url.pathname = '/coach/dashboard';
+    url.pathname = profile?.role === 'athlete' ? '/athlete/dashboard' : '/coach/dashboard';
     url.search = '';
     return NextResponse.redirect(url);
   }
