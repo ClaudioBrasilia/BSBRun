@@ -3,13 +3,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Activity, TrendingUp, CalendarRange, Dumbbell, LogOut, Menu, X } from 'lucide-react';
+import { Activity, TrendingUp, CalendarRange, Dumbbell, Plug, LogOut, Menu, X } from 'lucide-react';
 import { logout } from '@/app/(auth)/actions';
 
 const navItems = [
   { icon: TrendingUp, label: 'Painel', href: '/athlete/dashboard' },
   { icon: CalendarRange, label: 'Meu Plano', href: '/athlete/plan' },
   { icon: Dumbbell, label: 'Fortalecimento', href: '/athlete/strength' },
+  { icon: Plug, label: 'Integrações', href: '/athlete/integrations' },
 ];
 
 export function AthleteSidebar() {

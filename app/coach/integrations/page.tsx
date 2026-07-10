@@ -1,4 +1,3 @@
-import { Plug } from 'lucide-react';
 import { integrations } from '@/lib/integrations';
 
 export default function IntegrationsPage() {
@@ -7,7 +6,7 @@ export default function IntegrationsPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white">Integrações</h1>
         <p className="text-slate-400 mt-1">
-          Conecte o BSBRun a outros aplicativos para importar treinos automaticamente.
+          Apps que os seus atletas podem conectar para importar treinos automaticamente.
         </p>
       </div>
 
@@ -20,30 +19,22 @@ export default function IntegrationsPage() {
               </div>
               <div>
                 <h3 className="font-bold text-white">{provider.name}</h3>
-                <span className="text-xs text-yellow-400">
+                <span className={`text-xs ${provider.status === 'available' ? 'text-primary' : 'text-yellow-400'}`}>
                   {provider.status === 'coming_soon' ? 'Em breve' : 'Disponível'}
                 </span>
               </div>
             </div>
-            <p className="text-sm text-slate-400 flex-1 mb-4">{provider.description}</p>
-            <button
-              disabled
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-slate-800 text-slate-500 font-semibold rounded-xl cursor-not-allowed"
-            >
-              <Plug className="w-4 h-4" />
-              Conectar
-            </button>
+            <p className="text-sm text-slate-400 flex-1">{provider.description}</p>
           </div>
         ))}
       </div>
 
       <div className="glass rounded-2xl p-6 mt-8">
-        <h2 className="text-lg font-bold text-white mb-2">Como funcionará</h2>
+        <h2 className="text-lg font-bold text-white mb-2">Como funciona</h2>
         <p className="text-sm text-slate-400">
-          A estrutura de integrações já está preparada no código (<code className="text-primary">lib/integrations</code>).
-          Quando você quiser ativar o Strava, basta registrar um app no Strava, adicionar as credenciais
-          nas variáveis de ambiente e implementar o fluxo de autorização — o resto do app já está pronto para
-          receber as atividades importadas.
+          A conexão é feita pelo próprio atleta (é a conta dele que tem os treinos), na área dele em{' '}
+          <strong className="text-slate-300">Integrações</strong>. Você não precisa fazer nada aqui — assim que o
+          atleta conectar e sincronizar, as corridas importadas ficam disponíveis no histórico dele.
         </p>
       </div>
     </>

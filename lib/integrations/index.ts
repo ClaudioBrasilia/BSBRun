@@ -13,6 +13,7 @@
 
 import type { LucideIcon } from 'lucide-react';
 import { Activity, Watch, HeartPulse } from 'lucide-react';
+import { isStravaConfigured } from './strava';
 
 export type IntegrationStatus = 'available' | 'coming_soon';
 
@@ -30,10 +31,10 @@ export const integrations: IntegrationProvider[] = [
   {
     id: 'strava',
     name: 'Strava',
-    description: 'Importe automaticamente corridas e atividades do Strava.',
+    description: 'O atleta conecta a própria conta e as corridas são importadas automaticamente.',
     icon: Activity,
-    status: 'coming_soon',
-    configured: Boolean(process.env.STRAVA_CLIENT_ID && process.env.STRAVA_CLIENT_SECRET),
+    status: isStravaConfigured() ? 'available' : 'coming_soon',
+    configured: isStravaConfigured(),
   },
   {
     id: 'garmin',

@@ -59,6 +59,28 @@ export interface WorkoutRow {
   created_at: string;
 }
 
+export interface StravaConnectionRow {
+  id: string;
+  athlete_id: string;
+  strava_athlete_id: number;
+  access_token: string;
+  refresh_token: string;
+  expires_at: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StravaActivityRow {
+  id: string;
+  athlete_id: string;
+  strava_activity_id: number;
+  name: string | null;
+  distance_m: number | null;
+  moving_time_s: number | null;
+  start_date: string | null;
+  created_at: string;
+}
+
 export type AthleteInsert = Omit<
   AthleteRow,
   'id' | 'created_at' | 'updated_at' | 'user_id' | 'invite_code'
@@ -93,6 +115,18 @@ export interface Database {
         Row: WorkoutRow;
         Insert: Omit<WorkoutRow, 'id' | 'created_at'>;
         Update: Partial<WorkoutRow>;
+        Relationships: [];
+      };
+      strava_connections: {
+        Row: StravaConnectionRow;
+        Insert: Omit<StravaConnectionRow, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<StravaConnectionRow, 'id' | 'athlete_id'>>;
+        Relationships: [];
+      };
+      strava_activities: {
+        Row: StravaActivityRow;
+        Insert: Omit<StravaActivityRow, 'id' | 'created_at'>;
+        Update: Partial<StravaActivityRow>;
         Relationships: [];
       };
     };
