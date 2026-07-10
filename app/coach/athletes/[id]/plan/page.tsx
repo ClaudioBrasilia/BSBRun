@@ -74,7 +74,7 @@ export default async function AthletePlanPage({ params }: { params: { id: string
         </Link>
         <h1 className="text-3xl font-bold text-white">Plano de Treino — {athlete.name}</h1>
         <p className="text-slate-400 mt-1">
-          Periodização de Jack Daniels em 4 fases, gerada a partir do VDOT e do objetivo.
+          Periodização em 4 fases, gerada a partir do VDOT e do objetivo.
         </p>
       </div>
 
@@ -159,7 +159,7 @@ export default async function AthletePlanPage({ params }: { params: { id: string
       </div>
 
       <p className="text-xs text-slate-500 mt-8">
-        Plano gerado automaticamente seguindo a metodologia de Daniels (limites: T ≤ 10% do volume semanal, I ≤ 8%,
+        Plano gerado automaticamente pela metodologia VDOT (limites: T ≤ 10% do volume semanal, I ≤ 8%,
         R ≤ 5%; ~80% do volume em ritmo fácil). Ajuste conforme a resposta do atleta.
       </p>
     </>

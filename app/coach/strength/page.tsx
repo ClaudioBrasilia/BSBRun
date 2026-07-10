@@ -24,7 +24,7 @@ export default function CoachStrengthPage() {
     <>
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white">Fortalecimento &amp; Prevenção</h1>
-        <p className="text-slate-400 mt-1">Exercícios baseados no Daniels&apos; Running Formula</p>
+        <p className="text-slate-400 mt-1">Exercícios de fortalecimento e prevenção de lesões pra corredores</p>
       </div>
 
       <div className="mb-8">

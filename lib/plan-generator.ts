@@ -1,9 +1,9 @@
 import { getTrainingPaces, type TrainingPaces } from './vdot';
 
 // ============================================================================
-// Gerador de planos de treino — metodologia de Jack Daniels (4 fases).
+// Gerador de planos de treino — metodologia VDOT (4 fases).
 //
-// Regras principais seguidas (Daniels' Running Formula):
+// Regras principais seguidas:
 //  - ~80% do volume em ritmo fácil (E); qualidade limitada por semana.
 //  - Limites semanais de qualidade: T ≤ 10% do volume, I ≤ 8%, R ≤ 5%.
 //  - Sessão de I ≤ 8 km; sessão de R ≤ ~6 km.

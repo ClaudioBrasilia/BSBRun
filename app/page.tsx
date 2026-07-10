@@ -39,16 +39,16 @@ export default function HomePage() {
           className="text-center mb-16"
         >
           <h2 className="text-5xl md:text-6xl font-bold text-white mb-6">
-            Treine com a{' '}
+            Corra com{' '}
             <span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">
-              Ciência
+              propósito
             </span>
             <br />
-            de Jack Daniels
+            e ciência
           </h2>
           <p className="text-xl text-slate-300 max-w-2xl mx-auto mb-8">
-            Plataforma completa para coaches e atletas. Planos personalizados baseados no VDOT,
-            periodização inteligente e fortalecimento preventivo.
+            Do primeiro treino à linha de chegada: planos personalizados pelo seu VDOT, periodização
+            inteligente e fortalecimento para chegar mais forte — e sem lesões — no seu próximo objetivo.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Link
@@ -75,26 +75,26 @@ export default function HomePage() {
           {[
             {
               icon: TrendingUp,
-              title: 'VDOT Inteligente',
-              description: 'Cálculo automático de paces baseado em resultados de provas',
+              title: 'Seus ritmos, sob medida',
+              description: 'Calcule seu VDOT e descubra o ritmo certo pra cada treino — mesmo sem nunca ter corrido a distância da sua prova',
               color: 'from-primary to-emerald-600',
             },
             {
               icon: Users,
-              title: 'Multi-Atletas',
-              description: 'Gerencie todos os seus alunos em um só lugar',
+              title: 'Feito pra quem treina gente',
+              description: 'Coaches gerenciam todos os atletas em um só lugar, sem planilha',
               color: 'from-blue-500 to-cyan-500',
             },
             {
               icon: Zap,
-              title: 'Fortalecimento',
-              description: 'Exercícios preventivos e de fortalecimento integrados',
+              title: 'Corra mais, machuque menos',
+              description: 'Fortalecimento e prevenção de lesões integrados ao seu plano',
               color: 'from-orange-500 to-red-500',
             },
             {
               icon: Activity,
-              title: 'Periodização',
-              description: 'Planos completos com 4 fases de treinamento',
+              title: 'Um plano que evolui com você',
+              description: 'Periodização em 4 fases, da base até o dia da prova',
               color: 'from-purple-500 to-pink-500',
             },
           ].map((feature, index) => (
@@ -116,7 +116,7 @@ export default function HomePage() {
       </main>
 
       <footer className="relative z-10 container mx-auto px-6 py-8 text-center text-slate-500 text-sm">
-        <p>Baseado em &quot;Daniels&apos; Running Formula&quot; — Jack Daniels, 3ª Edição</p>
+        <p>Metodologia VDOT — a mesma ciência usada por treinadores no mundo todo</p>
       </footer>
     </div>
   );

@@ -5,6 +5,7 @@ import { useFormState, useFormStatus } from 'react-dom';
 import { ArrowLeft, Save } from 'lucide-react';
 import { createAthlete, type AthleteFormResult } from '../actions';
 import { DISTANCES } from '@/lib/vdot';
+import { RaceInputFields } from '@/components/RaceInputFields';
 
 const distanceOptions = Object.keys(DISTANCES);
 
@@ -114,27 +115,15 @@ export default function NewAthletePage() {
         </div>
 
         <div className="glass rounded-2xl p-6 space-y-4">
-          <h2 className="text-lg font-bold text-white">Prova recente (para o VDOT)</h2>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm text-slate-400 mb-1">Distância</label>
-              <select name="race_distance" defaultValue="" className={inputClass}>
-                <option value="">—</option>
-                {distanceOptions.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm text-slate-400 mb-1">Tempo (mm:ss ou hh:mm:ss)</label>
-              <input name="race_time" className={inputClass} placeholder="Ex: 22:30" />
-            </div>
-          </div>
+          <h2 className="text-lg font-bold text-white">Resultado recente (para o VDOT)</h2>
           <p className="text-xs text-slate-500">
-            Deixe em branco se ainda não tiver um resultado — você pode adicionar depois.
+            Não precisa ser a distância-alvo — pode ser qualquer prova, teste ou até um teste de 12 minutos.
+            Deixe em branco se ainda não tiver um resultado; você pode adicionar depois.
           </p>
+          <RaceInputFields
+            onChange={() => {}}
+            hiddenNames={{ distanceM: 'race_distance_m', timeSeconds: 'race_time_seconds', label: 'race_distance_label' }}
+          />
         </div>
 
         <div className="glass rounded-2xl p-6 space-y-4">

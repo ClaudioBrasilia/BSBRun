@@ -3,8 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { calcVDOT, DISTANCES } from '@/lib/vdot';
-import { parseTimeToSeconds } from '@/lib/time';
+import { calcVDOT } from '@/lib/vdot';
 import type { AthleteInsert, Experience, Sex } from '@/lib/supabase/types';
 
 export interface AthleteFormResult {
@@ -36,23 +35,17 @@ export async function createAthlete(
     return { error: 'O nome do atleta é obrigatório.' };
   }
 
-  const raceDistance = String(formData.get('race_distance') ?? '').trim();
-  const raceTimeRaw = String(formData.get('race_time') ?? '').trim();
+  const raceDistanceM = optionalNumber(formData.get('race_distance_m'));
+  const raceTimeSeconds = optionalNumber(formData.get('race_time_seconds'));
+  const raceDistanceLabel = String(formData.get('race_distance_label') ?? '').trim();
 
   let vdot: number | null = null;
-  let raceTimeSeconds: number | null = null;
 
-  if (raceDistance && raceTimeRaw) {
-    const seconds = parseTimeToSeconds(raceTimeRaw);
-    if (seconds === null) {
-      return { error: 'Tempo da prova inválido. Use mm:ss ou hh:mm:ss.' };
+  if (raceDistanceM !== null && raceTimeSeconds !== null) {
+    if (raceDistanceM <= 0 || raceTimeSeconds <= 0) {
+      return { error: 'Resultado da prova inválido.' };
     }
-    const distanceM = DISTANCES[raceDistance];
-    if (!distanceM) {
-      return { error: 'Distância de prova inválida.' };
-    }
-    raceTimeSeconds = seconds;
-    vdot = calcVDOT(distanceM, seconds);
+    vdot = calcVDOT(raceDistanceM, raceTimeSeconds);
   }
 
   const sexValue = String(formData.get('sex') ?? '').trim();
@@ -68,7 +61,7 @@ export async function createAthlete(
     goal_date: String(formData.get('goal_date') ?? '').trim() || null,
     weekly_km: optionalNumber(formData.get('weekly_km')),
     days_per_week: optionalNumber(formData.get('days_per_week')),
-    race_distance: raceDistance || null,
+    race_distance: raceDistanceLabel || null,
     race_time_seconds: raceTimeSeconds,
     vdot,
     notes: String(formData.get('notes') ?? '').trim() || null,
@@ -84,7 +77,7 @@ export async function createAthlete(
     await supabase.from('vdot_history').insert({
       athlete_id: data.id,
       vdot,
-      race_distance: raceDistance,
+      race_distance: raceDistanceLabel,
       race_time_seconds: raceTimeSeconds,
     });
   }

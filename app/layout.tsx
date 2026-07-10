@@ -6,7 +6,7 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'BSBRun — Treinamento Inteligente',
-  description: 'Plataforma de treinamento de corrida baseada na Fórmula de Daniels',
+  description: 'Plataforma de treinamento de corrida baseada na metodologia VDOT',
 };
 
 export default function RootLayout({

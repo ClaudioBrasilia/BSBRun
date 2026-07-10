@@ -4,8 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Activity, Calculator, TrendingUp } from 'lucide-react';
-import { DISTANCES, calcVDOT, getTrainingPaces, getPerformanceEquivalences, type TrainingPaces } from '@/lib/vdot';
-import { parseTimeToSeconds } from '@/lib/time';
+import { calcVDOT, getTrainingPaces, getPerformanceEquivalences, type TrainingPaces } from '@/lib/vdot';
+import { RaceInputFields, type RaceInputResult } from '@/components/RaceInputFields';
 
 interface Result {
   vdot: number;
@@ -13,26 +13,14 @@ interface Result {
   equivalences: Record<string, string>;
 }
 
-const distanceOptions = Object.keys(DISTANCES);
-
 export default function CalculatorPage() {
-  const [distance, setDistance] = useState('5000m (5K)');
-  const [time, setTime] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [race, setRace] = useState<RaceInputResult>({ distanceM: null, timeSeconds: null, label: '', error: null });
   const [result, setResult] = useState<Result | null>(null);
 
   const handleCalculate = () => {
-    setError(null);
-    const seconds = parseTimeToSeconds(time);
-    if (seconds === null) {
-      setError('Tempo inválido. Use o formato mm:ss ou hh:mm:ss (ex: 22:30 ou 1:45:00).');
-      setResult(null);
-      return;
-    }
-    const distanceM = DISTANCES[distance];
-    const vdot = calcVDOT(distanceM, seconds);
+    if (!race.distanceM || !race.timeSeconds) return;
+    const vdot = calcVDOT(race.distanceM, race.timeSeconds);
     if (!Number.isFinite(vdot) || vdot <= 0) {
-      setError('Não foi possível calcular o VDOT com esses valores.');
       setResult(null);
       return;
     }
@@ -76,43 +64,18 @@ export default function CalculatorPage() {
         <div className="text-center mb-8">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">Calculadora de VDOT</h2>
           <p className="text-slate-400">
-            Informe o resultado de uma prova recente e descubra seu VDOT, ritmos de treino e tempos equivalentes.
+            Nunca correu a distância que você quer treinar? Sem problema — calcule seu VDOT a partir de qualquer
+            corrida forte que você já fez, ou de um teste rápido de 12 minutos.
           </p>
         </div>
 
         <div className="glass rounded-2xl p-6 mb-8">
-          <div className="grid md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block text-sm text-slate-400 mb-1">Distância da prova</label>
-              <select
-                value={distance}
-                onChange={(e) => setDistance(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                {distanceOptions.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm text-slate-400 mb-1">Tempo (mm:ss ou hh:mm:ss)</label>
-              <input
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleCalculate()}
-                placeholder="ex: 22:30"
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-          </div>
-
-          {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
+          <RaceInputFields onChange={setRace} />
 
           <button
             onClick={handleCalculate}
-            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl transition-all"
+            disabled={!race.distanceM || !race.timeSeconds}
+            className="w-full mt-4 flex items-center justify-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all"
           >
             <Calculator className="w-5 h-5" />
             Calcular
@@ -169,7 +132,7 @@ export default function CalculatorPage() {
       </main>
 
       <footer className="container mx-auto px-6 py-8 text-center text-slate-500 text-sm">
-        <p>Baseado em &quot;Daniels&apos; Running Formula&quot; — Jack Daniels, 3ª Edição</p>
+        <p>Calculadora baseada na metodologia VDOT</p>
       </footer>
     </div>
   );

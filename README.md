@@ -1,6 +1,6 @@
 # 🏃 BSBRun
 
-Plataforma de treinamento de corrida baseada na **Fórmula de Jack Daniels (VDOT)**, para coaches gerenciarem seus atletas — com cálculo automático de ritmos, calculadora pública de VDOT e módulo de fortalecimento e prevenção de lesões.
+Plataforma de treinamento de corrida baseada na **metodologia VDOT**, para coaches gerenciarem seus atletas — com cálculo automático de ritmos, calculadora pública de VDOT e módulo de fortalecimento e prevenção de lesões.
 
 ## ✨ Funcionalidades
 
@@ -99,6 +99,6 @@ A estrutura em `lib/integrations` já está pronta. Para ativar o **Strava**:
 2. Adicione `STRAVA_CLIENT_ID` e `STRAVA_CLIENT_SECRET` ao ambiente.
 3. Implemente o fluxo OAuth em `app/api/integrations/strava/`.
 
-## 📚 Referência
+## 📚 Metodologia
 
-Baseado em *Daniels' Running Formula* — Jack Daniels, 3ª Edição.
+Os cálculos de VDOT, ritmos de treino e periodização seguem a metodologia VDOT amplamente usada por treinadores de corrida.
