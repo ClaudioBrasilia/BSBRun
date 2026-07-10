@@ -33,8 +33,12 @@ Acesse [http://localhost:3000](http://localhost:3000). A landing page e a **calc
 
 ## 🗄️ Configurando o Supabase
 
+### Opção A — manual (funciona sempre, recomendada para o primeiro teste)
+
 1. Crie um projeto grátis em [supabase.com](https://supabase.com).
-2. No painel do projeto, vá em **SQL Editor** e rode o conteúdo de [`supabase/schema.sql`](supabase/schema.sql) (cria tabelas, políticas de segurança e o gatilho de criação de perfil).
+2. No painel do projeto, vá em **SQL Editor** → **New query**, cole o conteúdo de
+   [`supabase/migrations/20260710025022_initial_schema.sql`](supabase/migrations/20260710025022_initial_schema.sql)
+   e clique em **Run** (cria tabelas, políticas de segurança e o gatilho de criação de perfil).
 3. Em **Project Settings → API**, copie a **Project URL** e a chave **anon public**.
 4. Preencha no `.env.local` (e nas variáveis de ambiente da Vercel):
 
@@ -42,6 +46,16 @@ Acesse [http://localhost:3000](http://localhost:3000). A landing page e a **calc
    NEXT_PUBLIC_SUPABASE_URL=https://SEU-PROJETO.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=sua-anon-key
    ```
+
+### Opção B — integração automática com o GitHub
+
+O Supabase consegue aplicar as migrations automaticamente a cada push, sem precisar rodar SQL manualmente:
+
+1. No painel do Supabase: **Project Settings → Integrations → GitHub** → conecte e autorize o repositório `bsbrun`.
+2. Edite [`supabase/config.toml`](supabase/config.toml) e troque `project_id` pela **Reference ID** do seu projeto (em Project Settings → General).
+3. Depois de conectado, qualquer novo arquivo `.sql` adicionado em `supabase/migrations/` é aplicado automaticamente quando você faz push na branch principal.
+
+> A integração só reconhece o repositório se ele tiver a estrutura da CLI do Supabase (`supabase/config.toml` + `supabase/migrations/*.sql`) — por isso os dois arquivos já vêm prontos aqui. Se o Supabase não achar o repositório na lista ao conectar, confirme se o **GitHub App do Supabase** tem permissão de acesso a ele em github.com/settings/installations.
 
 > Por padrão o Supabase pede **confirmação de e-mail** no cadastro. Para testar rápido, você pode desativar em **Authentication → Providers → Email → Confirm email**.
 
@@ -72,7 +86,9 @@ lib/
 ├── supabase/                 # Clients (browser/server), middleware, tipos
 ├── data/                     # Consultas ao banco
 └── integrations/             # Registro de integrações
-supabase/schema.sql           # Schema do banco (rodar no Supabase)
+supabase/
+├── config.toml              # Config para a integração GitHub do Supabase
+└── migrations/*.sql         # Schema do banco (fonte da verdade)
 ```
 
 ## 🔌 Integrações (próximo passo)

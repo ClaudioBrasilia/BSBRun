@@ -1,0 +1,11 @@
+# Configuração mínima para a integração GitHub do Supabase reconhecer este
+# repositório como um projeto Supabase e aplicar as migrations em
+# supabase/migrations/ automaticamente a cada push na branch principal.
+#
+# Depois de conectar o repo em Project Settings > Integrations > GitHub no
+# painel do Supabase, troque "project_id" abaixo pela referência do seu
+# projeto (Project Settings > General > Reference ID).
+project_id = "seu-project-ref-aqui"
+
+[db]
+major_version = 15
