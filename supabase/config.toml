@@ -5,7 +5,7 @@
 # Depois de conectar o repo em Project Settings > Integrations > GitHub no
 # painel do Supabase, troque "project_id" abaixo pela referência do seu
 # projeto (Project Settings > General > Reference ID).
-project_id = "seu-project-ref-aqui"
+project_id = "hiufxleltscxqyxpjxrp"
 
 [db]
 major_version = 15
