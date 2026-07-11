@@ -43,9 +43,9 @@ export default function IntegrationsPage() {
           atleta conectar e sincronizar, as corridas importadas ficam disponíveis no histórico dele.
         </p>
         <p className="text-sm text-slate-400 mt-3">
-          O Strava passou a exigir assinatura paga do desenvolvedor do app (a partir de US$ 11,99/mês, cobrado de
-          quem registra o app — no caso, você) para usar a API. Por isso essa integração está pausada por enquanto;
-          nada quebra e o app funciona normalmente sem ela.
+          O Strava passou a exigir assinatura paga do desenvolvedor do app para usar a API (cobrada de quem
+          registra o app — no caso, você). Por isso essa integração está pausada por enquanto; nada quebra e o
+          app funciona normalmente sem ela.
         </p>
       </div>
     </>

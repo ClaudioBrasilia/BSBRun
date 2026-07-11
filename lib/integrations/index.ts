@@ -1,18 +1,20 @@
 /**
  * Registro de integrações do BSBRun.
  *
- * Estrutura pronta para plugar provedores externos (Strava, Garmin, etc.).
- * Cada provedor será implementado como um módulo com fluxo OAuth + sincronização
- * de atividades. Por enquanto ficam marcados como "em breve".
+ * Garmin Connect e Google Fit foram avaliados e descartados por ora:
+ * - Garmin: programa de desenvolvedor suspenso para novos cadastros e não
+ *   aceita uso individual (só empresas/instituições).
+ * - Google Fit: API sendo descontinuada pelo Google até o fim de 2026,
+ *   sem novos cadastros desde maio de 2024.
  *
- * Para habilitar o Strava, por exemplo:
+ * Para habilitar o Strava:
  *   1. Registre um app em https://www.strava.com/settings/api
  *   2. Preencha STRAVA_CLIENT_ID / STRAVA_CLIENT_SECRET no .env
- *   3. Implemente o fluxo OAuth em app/api/integrations/strava/*
+ *   (o fluxo OAuth já está implementado em app/api/integrations/strava/*)
  */
 
 import type { LucideIcon } from 'lucide-react';
-import { Activity, Watch, HeartPulse } from 'lucide-react';
+import { Activity } from 'lucide-react';
 import { isStravaConfigured } from './strava';
 
 export type IntegrationStatus = 'available' | 'coming_soon' | 'requires_subscription';
@@ -35,21 +37,5 @@ export const integrations: IntegrationProvider[] = [
     icon: Activity,
     status: isStravaConfigured() ? 'available' : 'requires_subscription',
     configured: isStravaConfigured(),
-  },
-  {
-    id: 'garmin',
-    name: 'Garmin Connect',
-    description: 'Sincronize dados de treino de relógios e dispositivos Garmin.',
-    icon: Watch,
-    status: 'coming_soon',
-    configured: false,
-  },
-  {
-    id: 'google-fit',
-    name: 'Google Fit',
-    description: 'Importe atividades e dados de saúde do Google Fit.',
-    icon: HeartPulse,
-    status: 'coming_soon',
-    configured: false,
   },
 ];
