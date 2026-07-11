@@ -68,7 +68,11 @@ export default async function AthleteIntegrationsPage({
           </div>
 
           {!isStravaConfigured() ? (
-            <span className="text-sm text-slate-500">Em breve</span>
+            <span className="text-sm text-slate-500 text-right">
+              Indisponível no momento
+              <br />
+              <span className="text-xs">(pausado pelo administrador)</span>
+            </span>
           ) : connection ? (
             <div className="flex items-center gap-2">
               <SyncStravaButton />

@@ -1,5 +1,11 @@
 import { integrations } from '@/lib/integrations';
 
+const statusLabel: Record<string, { text: string; className: string }> = {
+  available: { text: 'Disponível', className: 'text-primary' },
+  coming_soon: { text: 'Em breve', className: 'text-yellow-400' },
+  requires_subscription: { text: 'Requer assinatura do desenvolvedor', className: 'text-orange-400' },
+};
+
 export default function IntegrationsPage() {
   return (
     <>
@@ -19,8 +25,8 @@ export default function IntegrationsPage() {
               </div>
               <div>
                 <h3 className="font-bold text-white">{provider.name}</h3>
-                <span className={`text-xs ${provider.status === 'available' ? 'text-primary' : 'text-yellow-400'}`}>
-                  {provider.status === 'coming_soon' ? 'Em breve' : 'Disponível'}
+                <span className={`text-xs ${statusLabel[provider.status].className}`}>
+                  {statusLabel[provider.status].text}
                 </span>
               </div>
             </div>
@@ -35,6 +41,11 @@ export default function IntegrationsPage() {
           A conexão é feita pelo próprio atleta (é a conta dele que tem os treinos), na área dele em{' '}
           <strong className="text-slate-300">Integrações</strong>. Você não precisa fazer nada aqui — assim que o
           atleta conectar e sincronizar, as corridas importadas ficam disponíveis no histórico dele.
+        </p>
+        <p className="text-sm text-slate-400 mt-3">
+          O Strava passou a exigir assinatura paga do desenvolvedor do app (a partir de US$ 11,99/mês, cobrado de
+          quem registra o app — no caso, você) para usar a API. Por isso essa integração está pausada por enquanto;
+          nada quebra e o app funciona normalmente sem ela.
         </p>
       </div>
     </>
