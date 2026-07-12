@@ -1,4 +1,5 @@
 import { getTrainingPaces, type TrainingPaces } from './vdot';
+import { parseTimeToSeconds, formatSeconds } from './time';
 
 // ============================================================================
 // Gerador de planos de treino — metodologia VDOT (4 fases).
@@ -164,14 +165,26 @@ function buildR(weeklyKm: number, paces: TrainingPaces) {
   };
 }
 
+/** Escolhe a distância do tiro de I para o tempo por repetição ficar entre 3 e 5 min (Daniels). */
+function chooseIntervalDistance(paceSecPerKm: number): number {
+  const targetSeconds = 240; // ~4 min, meio do intervalo 3–5 min
+  const rawMeters = (targetSeconds / paceSecPerKm) * 1000;
+  const options = [600, 800, 1000, 1200, 1600, 2000];
+  return options.reduce((best, d) => (Math.abs(d - rawMeters) < Math.abs(best - rawMeters) ? d : best));
+}
+
 function buildI(weeklyKm: number, paces: TrainingPaces) {
+  const paceSecPerKm = parseTimeToSeconds(paces.interval) ?? 240;
+  const rep = chooseIntervalDistance(paceSecPerKm);
+  const repSeconds = (paceSecPerKm / 1000) * rep;
+
   const totalM = clamp(weeklyKm * 0.08 * 1000, 2000, 8000);
-  const rep = 1000;
   const reps = clamp(round(totalM / rep), 3, 6);
   const workKm = (reps * rep) / 1000;
+
   return {
-    title: `Intervalos (I) — ${reps}×1000m`,
-    description: `Aquecimento, ${reps}×1000m em ritmo I (${paces.interval}/km) com ~3 min de trote entre as repetições, depois soltar. Estímulo de VO₂max — mantenha o ritmo constante.`,
+    title: `Intervalos (I) — ${reps}×${rep}m`,
+    description: `Aquecimento, ${reps}×${rep}m em ritmo I (${paces.interval}/km, ~${formatSeconds(repSeconds)} por tiro) com trote de recuperação de duração parecida (~1:1), depois soltar. Cada tiro entre 3 e 5 min — estímulo de VO₂max.`,
     workKm,
   };
 }
@@ -197,7 +210,9 @@ function buildT(weeklyKm: number, paces: TrainingPaces) {
 }
 
 function buildM(weeklyKm: number, paces: TrainingPaces) {
-  const workKm = clamp(round(weeklyKm * 0.15), 6, 18);
+  // Teto do Daniels: o menor entre 18 milhas (~29km) e 20% do volume semanal.
+  const capKm = clamp(weeklyKm * 0.2, 4, 29);
+  const workKm = clamp(round(weeklyKm * 0.15), 4, capKm);
   return {
     title: `Ritmo de Maratona (M) — ${workKm} km`,
     description: `Aquecimento leve e ${workKm} km em ritmo M (${paces.marathon}/km), simulando o ritmo-alvo de prova.`,
