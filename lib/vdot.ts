@@ -77,6 +77,18 @@ export function velocityToPace(velocityMPerMin: number, unit: 'km' | 'mi' = 'km'
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
+/**
+ * Tempo para percorrer uma distância de pista (400m, 200m) numa dada velocidade.
+ * Ritmos de Repetição (R) são tradicionalmente expressos assim (ex: "1:34" para
+ * 400m), não em min/km — é como o treino é corrido de fato, em tiros de pista.
+ */
+export function velocityToTrackPace(velocityMPerMin: number, distanceM: number): string {
+  const totalSeconds = (distanceM / velocityMPerMin) * 60;
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = Math.round(totalSeconds - minutes * 60);
+  return minutes > 0 ? `${minutes}:${seconds.toString().padStart(2, '0')}` : `${seconds}`;
+}
+
 export interface TrainingPaces {
   vdot: number;
   easySlow: string;
@@ -103,8 +115,8 @@ export function getTrainingPaces(vdot: number, unit: 'km' | 'mi' = 'km'): Traini
     marathon: velocityToPace(vM, unit),
     threshold: velocityToPace(vT, unit),
     interval: velocityToPace(vI, unit),
-    repetition400: velocityToPace(vR, unit),
-    repetition200: velocityToPace(vR * 1.02, unit),
+    repetition400: velocityToTrackPace(vR, 400),
+    repetition200: velocityToTrackPace(vR * 1.02, 200),
   };
 }
 

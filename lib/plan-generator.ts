@@ -158,9 +158,10 @@ function buildR(weeklyKm: number, paces: TrainingPaces) {
     reps = round(totalM / 200);
   }
   const workKm = (reps * dist) / 1000;
+  const pace = dist === 400 ? paces.repetition400 : paces.repetition200;
   return {
     title: `Repetições (R) — ${reps}×${dist}m`,
-    description: `Aquecimento fácil, ${reps}×${dist}m em ritmo R (${paces.repetition400}/km) com recuperação trotando o mesmo tempo, depois soltar. Foco em técnica e velocidade sem acidose.`,
+    description: `Aquecimento fácil, ${reps}×${dist}m em ritmo R (${pace} /${dist}m) com recuperação trotando o mesmo tempo, depois soltar. Foco em técnica e velocidade sem acidose.`,
     workKm,
   };
 }
@@ -260,6 +261,20 @@ function weeklyVolume(
   return round(vol);
 }
 
+/**
+ * Trava de segurança do longão (Daniels, cap. 4 e 16): até 30% do volume semanal
+ * para quem corre menos de 64km/semana; para volumes maiores, o menor entre
+ * 25% do volume semanal ou 150 minutos (calculado no ritmo fácil do atleta).
+ */
+function longRunCapKm(weeklyKm: number, easySlowPace: string): number {
+  if (weeklyKm < 64) {
+    return weeklyKm * 0.3;
+  }
+  const paceMinPerKm = (parseTimeToSeconds(easySlowPace) ?? 360) / 60;
+  const kmIn150Min = 150 / paceMinPerKm;
+  return Math.min(weeklyKm * 0.25, kmIn150Min);
+}
+
 // --- Agendamento semanal ----------------------------------------------------
 
 function scheduleWeek(
@@ -302,7 +317,8 @@ function scheduleWeek(
   }
 
   // Distâncias: longão e qualidade primeiro, resto distribuído em E.
-  const longKm = clamp(round(weeklyKm * 0.28), 6, 32);
+  const longCap = longRunCapKm(weeklyKm, paces.easySlow);
+  const longKm = clamp(round(weeklyKm * 0.28), 6, Math.max(6, round(longCap)));
   const qualityKm: Record<number, number> = {};
   let qualityTotal = 0;
   usedQuality.forEach((type, i) => {

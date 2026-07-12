@@ -33,13 +33,13 @@ export default function CalculatorPage() {
 
   const paceRows = result
     ? [
-        { label: 'Easy (lento)', value: result.paces.easySlow, hint: 'Corrida fácil / regenerativa' },
-        { label: 'Easy (rápido)', value: result.paces.easyFast, hint: 'Limite superior do fácil' },
-        { label: 'Maratona (M)', value: result.paces.marathon, hint: 'Ritmo de maratona' },
-        { label: 'Threshold (T)', value: result.paces.threshold, hint: 'Limiar / tempo run' },
-        { label: 'Interval (I)', value: result.paces.interval, hint: 'VO₂max — tiros longos' },
-        { label: 'Repetition 400 (R)', value: result.paces.repetition400, hint: 'Velocidade / economia' },
-        { label: 'Repetition 200', value: result.paces.repetition200, hint: 'Tiros curtos' },
+        { label: 'Easy (lento)', value: `${result.paces.easySlow}/km`, hint: 'Corrida fácil / regenerativa' },
+        { label: 'Easy (rápido)', value: `${result.paces.easyFast}/km`, hint: 'Limite superior do fácil' },
+        { label: 'Maratona (M)', value: `${result.paces.marathon}/km`, hint: 'Ritmo de maratona' },
+        { label: 'Threshold (T)', value: `${result.paces.threshold}/km`, hint: 'Limiar / tempo run' },
+        { label: 'Interval (I)', value: `${result.paces.interval}/km`, hint: 'VO₂max — tiros longos' },
+        { label: 'Repetition (R)', value: `${result.paces.repetition400} /400m`, hint: 'Velocidade / economia' },
+        { label: 'Repetition 200', value: `${result.paces.repetition200} /200m`, hint: 'Tiros curtos' },
       ]
     : [];
 
@@ -99,7 +99,7 @@ export default function CalculatorPage() {
             </div>
 
             <div className="glass rounded-2xl p-6">
-              <h3 className="text-xl font-bold text-white mb-4">Ritmos de Treino (por km)</h3>
+              <h3 className="text-xl font-bold text-white mb-4">Ritmos de Treino</h3>
               <div className="grid sm:grid-cols-2 gap-3">
                 {paceRows.map((row) => (
                   <div key={row.label} className="bg-slate-800/50 rounded-xl p-4">

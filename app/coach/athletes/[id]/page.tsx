@@ -21,12 +21,12 @@ export default async function AthleteDetailPage({ params }: { params: { id: stri
 
   const paceRows = paces
     ? [
-        { label: 'Easy (lento)', value: paces.easySlow },
-        { label: 'Easy (rápido)', value: paces.easyFast },
-        { label: 'Maratona (M)', value: paces.marathon },
-        { label: 'Threshold (T)', value: paces.threshold },
-        { label: 'Interval (I)', value: paces.interval },
-        { label: 'Repetition 400 (R)', value: paces.repetition400 },
+        { label: 'Easy (lento)', value: `${paces.easySlow}/km` },
+        { label: 'Easy (rápido)', value: `${paces.easyFast}/km` },
+        { label: 'Maratona (M)', value: `${paces.marathon}/km` },
+        { label: 'Threshold (T)', value: `${paces.threshold}/km` },
+        { label: 'Interval (I)', value: `${paces.interval}/km` },
+        { label: 'Repetition (R)', value: `${paces.repetition400} /400m` },
       ]
     : [];
 
@@ -90,7 +90,7 @@ export default async function AthleteDetailPage({ params }: { params: { id: stri
         </div>
 
         <div className="glass rounded-2xl p-6 lg:col-span-2">
-          <h2 className="text-lg font-bold text-white mb-4">Ritmos de Treino (por km)</h2>
+          <h2 className="text-lg font-bold text-white mb-4">Ritmos de Treino</h2>
           {paces ? (
             <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
               {paceRows.map((row) => (

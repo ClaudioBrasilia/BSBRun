@@ -95,11 +95,11 @@ export function TrainingPlanView({ athlete, backHref, backLabel, title, scope = 
   const currentWeek = plan.weeks[0];
 
   const paceRows = [
-    { label: 'E (fácil)', value: `${plan.paces.easySlow}–${plan.paces.easyFast}` },
-    { label: 'M (maratona)', value: plan.paces.marathon },
-    { label: 'T (limiar)', value: plan.paces.threshold },
-    { label: 'I (intervalo)', value: plan.paces.interval },
-    { label: 'R (repetição)', value: plan.paces.repetition400 },
+    { label: 'E (fácil)', value: `${plan.paces.easySlow}–${plan.paces.easyFast}/km` },
+    { label: 'M (maratona)', value: `${plan.paces.marathon}/km` },
+    { label: 'T (limiar)', value: `${plan.paces.threshold}/km` },
+    { label: 'I (intervalo)', value: `${plan.paces.interval}/km` },
+    { label: 'R (repetição)', value: `${plan.paces.repetition400} /400m` },
   ];
 
   const statsCards =
@@ -155,7 +155,7 @@ export function TrainingPlanView({ athlete, backHref, backLabel, title, scope = 
       </div>
 
       <div className="glass rounded-2xl p-6 mb-8">
-        <h2 className="text-lg font-bold text-white mb-3">Ritmos de treino (por km)</h2>
+        <h2 className="text-lg font-bold text-white mb-3">Ritmos de treino</h2>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           {paceRows.map((p) => (
             <div key={p.label} className="bg-slate-800/50 rounded-xl p-3">
