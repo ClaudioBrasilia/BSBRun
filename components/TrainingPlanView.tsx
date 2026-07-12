@@ -94,12 +94,12 @@ export function TrainingPlanView({ athlete, backHref, backLabel, title, scope = 
 
   const currentWeek = plan.weeks[0];
 
-  const paceRows = [
+  const paceRows: { label: string; value: string; note?: string }[] = [
     { label: 'E (fácil)', value: `${plan.paces.easySlow}–${plan.paces.easyFast}/km` },
     { label: 'M (maratona)', value: `${plan.paces.marathon}/km` },
     { label: 'T (limiar)', value: `${plan.paces.threshold}/km` },
     { label: 'I (intervalo)', value: `${plan.paces.interval}/km` },
-    { label: 'R (repetição)', value: `${plan.paces.repetition400} /400m` },
+    { label: 'R (repetição)', value: plan.paces.repetition400, note: 'p/ 400m, não min/km' },
   ];
 
   const statsCards =
@@ -161,6 +161,7 @@ export function TrainingPlanView({ athlete, backHref, backLabel, title, scope = 
             <div key={p.label} className="bg-slate-800/50 rounded-xl p-3">
               <div className="text-xs text-slate-400">{p.label}</div>
               <div className="text-sm font-bold text-white">{p.value}</div>
+              {p.note && <div className="text-[10px] text-slate-500 mt-0.5">{p.note}</div>}
             </div>
           ))}
         </div>

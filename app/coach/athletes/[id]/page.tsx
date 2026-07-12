@@ -19,14 +19,14 @@ export default async function AthleteDetailPage({ params }: { params: { id: stri
   const paces = athlete.vdot ? getTrainingPaces(athlete.vdot) : null;
   const equivalences = athlete.vdot ? getPerformanceEquivalences(athlete.vdot) : null;
 
-  const paceRows = paces
+  const paceRows: { label: string; value: string; note?: string }[] = paces
     ? [
         { label: 'Easy (lento)', value: `${paces.easySlow}/km` },
         { label: 'Easy (rápido)', value: `${paces.easyFast}/km` },
         { label: 'Maratona (M)', value: `${paces.marathon}/km` },
         { label: 'Threshold (T)', value: `${paces.threshold}/km` },
         { label: 'Interval (I)', value: `${paces.interval}/km` },
-        { label: 'Repetition (R)', value: `${paces.repetition400} /400m` },
+        { label: 'Repetition (R)', value: paces.repetition400, note: 'tempo p/ 400m, não min/km' },
       ]
     : [];
 
@@ -97,6 +97,7 @@ export default async function AthleteDetailPage({ params }: { params: { id: stri
                 <div key={row.label} className="bg-slate-800/50 rounded-xl p-4">
                   <div className="text-xs text-slate-400">{row.label}</div>
                   <div className="text-lg font-bold text-white">{row.value}</div>
+                  {row.note && <div className="text-[10px] text-slate-500 mt-0.5">{row.note}</div>}
                 </div>
               ))}
             </div>

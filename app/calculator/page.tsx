@@ -38,8 +38,8 @@ export default function CalculatorPage() {
         { label: 'Maratona (M)', value: `${result.paces.marathon}/km`, hint: 'Ritmo de maratona' },
         { label: 'Threshold (T)', value: `${result.paces.threshold}/km`, hint: 'Limiar / tempo run' },
         { label: 'Interval (I)', value: `${result.paces.interval}/km`, hint: 'VO₂max — tiros longos' },
-        { label: 'Repetition (R)', value: `${result.paces.repetition400} /400m`, hint: 'Velocidade / economia' },
-        { label: 'Repetition 200', value: `${result.paces.repetition200} /200m`, hint: 'Tiros curtos' },
+        { label: 'Repetition (R)', value: result.paces.repetition400, hint: 'Velocidade / economia — tempo p/ 400m, não min/km' },
+        { label: 'Repetition 200', value: result.paces.repetition200, hint: 'Tiros curtos — tempo p/ 200m, não min/km' },
       ]
     : [];
 
