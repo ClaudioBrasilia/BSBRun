@@ -12,6 +12,11 @@ const topics: Topic[] = [
       'É um número que representa a aptidão aeróbica do atleta, calculado a partir de qualquer prova ou teste (distância + tempo) — inclusive um teste de 12 minutos, pra quem nunca correu a distância-alvo. Todos os ritmos de treino são derivados só desse número.',
   },
   {
+    title: 'VDOT é o mesmo que VO₂max?',
+    body:
+      'Não exatamente. VO₂max é medido em laboratório (esteira + analisador de gases) e representa o teto real de consumo de oxigênio da pessoa. VDOT é calculado a partir do resultado de uma prova, e já embute a economia de corrida do atleta — duas pessoas com o mesmo VO₂max podem ter VDOT diferente se uma correr de forma mais econômica. Por isso o VDOT prevê ritmos de treino melhor do que o VO₂max puro, mesmo os dois números costumando ficar na mesma faixa.',
+  },
+  {
     title: 'As 5 intensidades de treino',
     body:
       'E (fácil, ~62–75% do VDOT): base aeróbica, ~80% do volume total. M (ritmo de maratona, ~82%): simula o ritmo de prova. T (limiar, ~88%): "confortavelmente difícil", melhora o clearance de lactato. I (intervalo, ~98%): estimula o VO₂max, é a fase mais exigente. R (repetição, ~105%): velocidade e economia de corrida, sem acidose — recuperação completa entre tiros.',
