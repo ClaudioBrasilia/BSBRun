@@ -3,13 +3,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Activity, TrendingUp, Users, Dumbbell, Plug, LogOut, Menu, X } from 'lucide-react';
+import { Activity, TrendingUp, Users, Dumbbell, Plug, BookOpen, LogOut, Menu, X } from 'lucide-react';
 import { logout } from '@/app/(auth)/actions';
 
 const navItems = [
   { icon: TrendingUp, label: 'Visão Geral', href: '/coach/dashboard' },
   { icon: Users, label: 'Atletas', href: '/coach/athletes' },
   { icon: Dumbbell, label: 'Fortalecimento', href: '/coach/strength' },
+  { icon: BookOpen, label: 'Metodologia', href: '/coach/methodology' },
   { icon: Plug, label: 'Integrações', href: '/coach/integrations' },
 ];
 
