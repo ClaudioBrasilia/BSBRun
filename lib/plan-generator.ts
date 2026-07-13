@@ -334,8 +334,11 @@ function scheduleWeek(
     .filter((d) => d.t === 'E')
     .map((d) => d.i);
 
+  // O longão deve ser sempre a corrida mais longa da semana — nenhum dia de E
+  // pode passar disso (senão "fácil" vira mais puxado que o próprio longão).
+  const eCap = Math.max(4, longKm);
   const remaining = Math.max(0, weeklyKm - longKm - qualityTotal);
-  const perE = eDayIndices.length > 0 ? Math.max(4, round(remaining / eDayIndices.length)) : 0;
+  const perE = eDayIndices.length > 0 ? clamp(round(remaining / eDayIndices.length), 4, eCap) : 0;
 
   return days.map((type, i) => {
     const day = i + 1;
