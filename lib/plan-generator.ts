@@ -273,8 +273,16 @@ function weeklyVolume(
  * Trava de segurança do longão (Daniels, cap. 4 e 16): até 30% do volume semanal
  * para quem corre menos de 64km/semana; para volumes maiores, o menor entre
  * 25% do volume semanal ou 150 minutos (calculado no ritmo fácil do atleta).
+ *
+ * Exceção iniciante (cap. 4 — tempo de estresse importa mais que distância fixa
+ * pro corredor mais lento): em semanas muito baixas de volume, sobe pra até 50%
+ * pra concentrar o volume no longão e manter as corridas de semana curtas,
+ * em vez de diluir tudo em dias parecidos e monótonos.
  */
-function longRunCapKm(weeklyKm: number, easySlowPace: string): number {
+function longRunCapKm(weeklyKm: number, easySlowPace: string, experience?: string | null): number {
+  if (experience === 'iniciante' && weeklyKm > 0 && weeklyKm <= 40) {
+    return weeklyKm * 0.5;
+  }
   if (weeklyKm < 64) {
     return weeklyKm * 0.3;
   }
@@ -294,7 +302,8 @@ function scheduleWeek(
   paces: TrainingPaces,
   useStrides: boolean,
   isRecovery: boolean,
-  isTaper: boolean
+  isTaper: boolean,
+  experience?: string | null
 ): PlannedWorkout[] {
   const days: WorkoutType[] = ['E', 'E', 'E', 'E', 'E', 'E', 'E'];
 
@@ -325,8 +334,11 @@ function scheduleWeek(
   }
 
   // Distâncias: longão e qualidade primeiro, resto distribuído em E.
-  const longCap = longRunCapKm(weeklyKm, paces.easySlow);
-  const longKm = clamp(round(weeklyKm * 0.28), 6, Math.max(6, round(longCap)));
+  const longCap = longRunCapKm(weeklyKm, paces.easySlow, experience);
+  // Iniciante em semana de volume muito baixo: mira o próprio teto (até 50%)
+  // pra concentrar o volume no longão, em vez do alvo padrão de ~28%.
+  const longTargetRatio = experience === 'iniciante' && weeklyKm > 0 && weeklyKm <= 40 ? 0.5 : 0.28;
+  const longKm = clamp(round(weeklyKm * longTargetRatio), 6, Math.max(6, round(longCap)));
   const qualityKm: Record<number, number> = {};
   let qualityTotal = 0;
   usedQuality.forEach((type, i) => {
@@ -366,13 +378,20 @@ function scheduleWeek(
       };
     }
     if (type === 'E') {
-      const strides = useStrides && (i === 2 || i === 4);
+      // Meio de semana (terça a sexta): dias de E que sobraram sem qualidade
+      // são os candidatos naturais pra strides — inclui terça/quinta, que é
+      // onde o iniciante com poucos dias por semana efetivamente corre.
+      const strides = useStrides && i >= 1 && i <= 4;
       return {
         day,
         dayName,
         type,
-        title: `Corrida fácil${strides ? ' + strides' : ''}`,
-        description: `${perE} km em ritmo E (${paces.easySlow}–${paces.easyFast}/km)${strides ? ', terminando com 6×20s de strides (acelerações leves).' : '.'}`,
+        title: `Corrida fácil${strides ? ' + strides (retas)' : ''}`,
+        description: `${perE} km em ritmo E (${paces.easySlow}–${paces.easyFast}/km)${
+          strides
+            ? ', terminando com 4 a 6 strides: tiros leves e rápidos de 15 a 20s (passada larga, boa postura — não é sprint máximo), com 45 a 60s de descanso completo (andando ou parado) entre um e outro.'
+            : '.'
+        }`,
         distanceKm: perE,
         quality: false,
       };
@@ -430,7 +449,8 @@ export function generatePlan(input: PlanInput): GeneratedPlan {
       paces,
       useStrides,
       isRecovery,
-      isTaper
+      isTaper,
+      input.experience
     );
 
     const totalKm = workouts.reduce((sum, w) => sum + w.distanceKm, 0);

@@ -29,7 +29,17 @@ const topics: Topic[] = [
   {
     title: 'Trava do Longão',
     body:
-      'Corredores com menos de 64 km/semana: longão pode chegar a 30% do volume da semana. Acima de 64 km/semana, a trava passa a ser o menor entre 25% do volume ou 150 minutos de duração (calculado no ritmo fácil do próprio atleta) — o que evita um longão desproporcional em quem já corre muito volume.',
+      'Corredores com menos de 64 km/semana: longão pode chegar a 30% do volume da semana. Acima de 64 km/semana, a trava passa a ser o menor entre 25% do volume ou 150 minutos de duração (calculado no ritmo fácil do próprio atleta) — o que evita um longão desproporcional em quem já corre muito volume. Exceção: iniciante com volume semanal muito baixo (até 40 km) pode chegar a 50% no longão — concentra o volume ali em vez de diluir em corridas de semana parecidas e monótonas.',
+  },
+  {
+    title: 'Strides (retas) nos dias de semana',
+    body:
+      'Tiros leves e rápidos de 15 a 20 segundos — não é sprint máximo, é sobre passada larga e boa postura/mecânica. Descanso de 45 a 60 segundos completo (andando ou parado) entre um e outro, geralmente 4 a 6 no fim de uma corrida fácil. Servem pra melhorar a economia de corrida, preparar o atleta pra correr mais rápido depois, e quebrar a monotonia de só correr sempre no mesmo ritmo.',
+  },
+  {
+    title: 'Por que o iniciante corre menos km por dia',
+    body:
+      'Pra quem é mais lento, correr a mesma distância de um atleta mais rápido significa passar bem mais tempo (e mais impacto no chão) correndo — o que importa de verdade é o tempo total de esforço, não a distância fixa. Por isso, no nível iniciante, a plataforma prefere corridas de semana mais curtas (com strides) e concentra o volume no longão de domingo, em vez de espalhar tudo igual em vários dias.',
   },
   {
     title: 'Trava dos tiros de Intervalo (I)',
