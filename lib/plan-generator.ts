@@ -238,6 +238,11 @@ function buildQuality(type: WorkoutType, weeklyKm: number, paces: TrainingPaces)
 
 // --- Volume semanal ---------------------------------------------------------
 
+// Daniels (cap. 4): o volume deve ficar estável por 3-4 semanas antes de
+// qualquer aumento — nunca subir toda semana. Usamos o teto do intervalo (4)
+// pra também coincidir com a semana de recuperação (a cada 4ª semana).
+const PLATEAU_WEEKS = 4;
+
 function weeklyVolume(
   weekIndex: number,
   totalWeeks: number,
@@ -253,9 +258,12 @@ function weeklyVolume(
     const factor = taperWeeksFromEnd === 0 ? 0.5 : 0.7;
     return round(peak * factor);
   }
-  // Progressão linear da base até o pico ao longo das fases I–II.
+  // Progressão em degraus: mantém o volume igual por PLATEAU_WEEKS semanas,
+  // depois sobe pro próximo patamar — nunca aumenta semana a semana.
   const rampWeeks = Math.max(1, Math.round(totalWeeks * 0.5));
-  const progress = clamp(weekIndex / rampWeeks, 0, 1);
+  const numSteps = Math.max(1, Math.ceil(rampWeeks / PLATEAU_WEEKS));
+  const step = Math.min(numSteps - 1, Math.floor(weekIndex / PLATEAU_WEEKS));
+  const progress = numSteps > 1 ? step / (numSteps - 1) : 1;
   let vol = start + (peak - start) * progress;
   if (isRecovery) vol *= 0.8;
   return round(vol);
@@ -386,9 +394,17 @@ function scheduleWeek(
 
 // --- Função principal -------------------------------------------------------
 
+// Dias mínimos de treino por semana, por nível (Daniels, cap. 8 — planos
+// Red/Blue exigem um mínimo de dias pra diluir o volume com segurança).
+const MIN_DAYS_BY_EXPERIENCE: Record<string, number> = {
+  intermediário: 4, // plano Red
+  avançado: 5, // plano Blue
+};
+
 export function generatePlan(input: PlanInput): GeneratedPlan {
   const totalWeeks = clamp(Math.round(input.totalWeeks), 4, 24);
-  const daysPerWeek = clamp(input.daysPerWeek ?? 5, 3, 7);
+  const minDays = MIN_DAYS_BY_EXPERIENCE[input.experience ?? ''] ?? 0;
+  const daysPerWeek = clamp(Math.max(input.daysPerWeek ?? 5, minDays), 3, 7);
   const start = input.weeklyKm && input.weeklyKm > 0 ? input.weeklyKm : defaultWeeklyKm(input.experience);
   const peak = round(Math.max(start, start * 1.25));
   const paces = getTrainingPaces(input.vdot);

@@ -56,6 +56,16 @@ const topics: Topic[] = [
     body:
       'A cada 4ª semana, o volume cai ~20% para o corpo absorver a carga acumulada. Nas duas últimas semanas antes da prova (Fase IV), entra o polimento (taper): o volume reduz progressivamente para o atleta chegar descansado e no pico de forma no dia da prova.',
   },
+  {
+    title: 'Progressão de volume em degraus',
+    body:
+      'O volume semanal fica estável por blocos de 4 semanas antes de subir pro próximo patamar — nunca aumenta toda semana. Isso coincide com a semana de recuperação (a 4ª de cada bloco), então o padrão é: 3 semanas estáveis, 1 semana de recuperação, e o próximo bloco já entra num volume maior.',
+  },
+  {
+    title: 'Dias mínimos por nível de experiência',
+    body:
+      'Segue os planos Red/Blue do livro: nível intermediário exige pelo menos 4 dias de corrida por semana; avançado, pelo menos 5. Se o coach cadastrar menos dias que isso, o gerador ajusta pra cima automaticamente — volume alto diluído em poucos dias é mais arriscado.',
+  },
 ];
 
 export default function CoachMethodologyPage() {
@@ -85,10 +95,11 @@ export default function CoachMethodologyPage() {
       <div className="glass rounded-2xl p-6 mt-6">
         <h2 className="font-bold text-white mb-2">Ainda não implementado</h2>
         <p className="text-sm text-slate-400 leading-relaxed">
-          Duas ideias ficaram no backlog por enquanto: progressão de volume em degraus (segurar o volume por
-          3–4 semanas e só aumentar com base em feedback do atleta) e uma pontuação de carga de treino semanal
-          (pontos por minuto em cada zona de intensidade). Hoje o volume sobe em rampa suave automática, sem
-          depender de feedback.
+          Uma pontuação de carga de treino semanal (pontos por minuto em cada zona de intensidade) ficou no
+          backlog. Também vale registrar: nosso sistema usa 3 níveis de experiência (iniciante, intermediário,
+          avançado) mapeados aos planos Red/Blue do livro — ainda não temos um nível "Elite/Gold" (60+ milhas
+          por semana) nem o plano "White" por tempo (sem meta de quilometragem, com caminhada intercalada) para
+          iniciantes completos.
         </p>
       </div>
     </>
