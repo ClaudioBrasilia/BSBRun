@@ -5,11 +5,17 @@ import { parseTimeToSeconds, formatSeconds } from './time';
 // Gerador de planos de treino — metodologia VDOT (4 fases).
 //
 // Regras principais seguidas:
-//  - ~80% do volume em ritmo fácil (E); qualidade limitada por semana.
+//  - ~80% do volume em ritmo fácil (E); no máximo 2 sessões de qualidade por
+//    semana (o longão com bloco M conta como qualidade).
 //  - Limites semanais de qualidade: T ≤ 10% do volume, I ≤ 8%, R ≤ 5%.
-//  - Sessão de I ≤ 8 km; sessão de R ≤ ~6 km.
+//  - Sessão de I ≤ 8 km; sessão de R ≤ ~6 km; M ≤ 20% do volume por corrida.
 //  - Longão ≈ 25–30% do volume semanal.
-//  - Progressão de volume com semanas de recuperação e polimento (taper).
+//  - Ênfase de qualidade por prova (Parte II): meio-fundo R/I, 5K-10K I+T,
+//    15K-meia T dominante, maratona M+T com blocos M no longão.
+//  - Sessões variam de formato e progridem de volume dentro de cada fase;
+//    strides em dias E a temporada inteira; força/prevenção 2×/semana.
+//  - Volume em degraus (platôs de 4 semanas), semanas de recuperação a cada
+//    4ª e polimento (taper) de 2 semanas — 3 para maratona.
 // ============================================================================
 
 export type WorkoutType = 'E' | 'L' | 'M' | 'T' | 'I' | 'R' | 'Rest';
@@ -22,6 +28,8 @@ export interface PlannedWorkout {
   description: string;
   distanceKm: number;
   quality: boolean;
+  /** Sessão de força/prevenção (20–30 min) acoplada ao dia. */
+  strength: boolean;
 }
 
 export interface PlannedWeek {
@@ -63,12 +71,52 @@ const PHASE_NAMES: Record<number, string> = {
   4: 'Fase IV — Qualidade Final',
 };
 
-const PHASE_FOCUS: Record<number, string> = {
-  1: 'Base e prevenção: corrida fácil (E), construção de volume e educativos (strides).',
-  2: 'Qualidade inicial: Repetições (R) para economia de corrida e velocidade.',
-  3: 'Qualidade de transição: Intervalos (I) para desenvolver o VO₂max. Fase mais exigente.',
-  4: 'Qualidade final: Limiar (T) e ritmo de prova, com polimento para a competição.',
-};
+/**
+ * Grupo da prova-alvo — muda a ênfase de qualidade (Daniels, Parte II):
+ *  - meio-fundo (caps. 11–12): R/I pesados, velocidade e economia;
+ *  - 5K/10K (cap. 13): combinação de I + T;
+ *  - 15K–meia (cap. 15): "threshold supremacy" — T é a pedra angular, R mínimo;
+ *  - maratona (cap. 16): centrada em M e T, quase nada de I/R.
+ */
+type GoalGroup = 'meio-fundo' | '5k-10k' | '15k-meia' | 'maratona';
+
+function goalGroup(goalDistance: string): GoalGroup {
+  if (goalDistance === 'Maratona') return 'maratona';
+  if (goalDistance === 'Meia Maratona' || goalDistance === '15K') return '15k-meia';
+  if (goalDistance === '1500m' || goalDistance === 'Milha' || goalDistance === '3000m') return 'meio-fundo';
+  return '5k-10k';
+}
+
+function phaseFocus(phase: 1 | 2 | 3 | 4, group: GoalGroup): string {
+  if (phase === 1) {
+    return 'Base e prevenção: corrida fácil (E), construção de volume e educativos (strides).';
+  }
+  if (phase === 2) {
+    return group === 'maratona'
+      ? 'Qualidade inicial: Limiar (T) como alicerce e um toque de Repetições (R) para economia de corrida.'
+      : 'Qualidade inicial: Repetições (R) para economia de corrida e velocidade.';
+  }
+  if (phase === 3) {
+    switch (group) {
+      case 'maratona':
+      case '15k-meia':
+        return 'Qualidade de transição: Limiar (T) como pedra angular, com Intervalos (I) para o VO₂max. Fase mais exigente.';
+      case 'meio-fundo':
+        return 'Qualidade de transição: Intervalos (I) para o VO₂max, mantendo Repetições (R) para velocidade. Fase mais exigente.';
+      default:
+        return 'Qualidade de transição: Intervalos (I) para desenvolver o VO₂max. Fase mais exigente.';
+    }
+  }
+  switch (group) {
+    case 'maratona':
+    case '15k-meia':
+      return 'Qualidade final: Limiar (T) e ritmo de prova (M), com polimento para a competição.';
+    case 'meio-fundo':
+      return 'Qualidade final: velocidade específica de prova (R/I), com polimento para a competição.';
+    default:
+      return 'Qualidade final: Limiar (T) e ritmo de prova, com polimento para a competição.';
+  }
+}
 
 function clamp(v: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, v));
@@ -124,23 +172,18 @@ function splitPhases(totalWeeks: number): (1 | 2 | 3 | 4)[] {
   return weeks;
 }
 
-/** Tipos de treino de qualidade por fase, dependendo do objetivo. */
-function qualityTypesForPhase(
-  phase: 1 | 2 | 3 | 4,
-  goalDistance: string
-): WorkoutType[] {
-  const isLongGoal = goalDistance === 'Maratona' || goalDistance === 'Meia Maratona';
-  switch (phase) {
-    case 1:
-      return []; // só E + strides
-    case 2:
-      return ['R', 'R'];
-    case 3:
-      return ['I', 'T'];
-    case 4:
-      return isLongGoal ? ['T', 'M'] : ['T', 'I'];
-    default:
-      return [];
+/** Matriz fase × prova: quais tipos de qualidade entram em cada fase. */
+function qualityTypesForPhase(phase: 1 | 2 | 3 | 4, group: GoalGroup): WorkoutType[] {
+  if (phase === 1) return []; // só E + strides
+  switch (group) {
+    case 'meio-fundo':
+      return phase === 2 ? ['R', 'R'] : phase === 3 ? ['I', 'R'] : ['R', 'I'];
+    case '15k-meia':
+      return phase === 2 ? ['R', 'T'] : phase === 3 ? ['T', 'I'] : ['T', 'M'];
+    case 'maratona':
+      return phase === 2 ? ['T', 'R'] : phase === 3 ? ['T', 'I'] : ['T', 'M'];
+    default: // 5k-10k
+      return phase === 2 ? ['R', 'R'] : phase === 3 ? ['I', 'T'] : ['T', 'I'];
   }
 }
 
@@ -323,13 +366,15 @@ function weeklyVolume(
   taperWeeksFromEnd: number
 ): number {
   if (isTaper) {
-    // Polimento: reduz volume nas últimas semanas.
-    const factor = taperWeeksFromEnd === 0 ? 0.5 : 0.7;
+    // Polimento: reduz volume progressivamente nas últimas semanas.
+    const factor = taperWeeksFromEnd === 0 ? 0.5 : taperWeeksFromEnd === 1 ? 0.7 : 0.8;
     return round(peak * factor);
   }
   // Progressão em degraus: mantém o volume igual por PLATEAU_WEEKS semanas,
-  // depois sobe pro próximo patamar — nunca aumenta semana a semana.
-  const rampWeeks = Math.max(1, Math.round(totalWeeks * 0.5));
+  // depois sobe pro próximo patamar — nunca aumenta semana a semana. A rampa
+  // cobre ~70% do plano pra dividir a subida em degraus menores (um plano de
+  // 16 semanas sobe em 3 degraus de ~12%, não num salto único de 25%).
+  const rampWeeks = Math.max(1, Math.round(totalWeeks * 0.7));
   const numSteps = Math.max(1, Math.ceil(rampWeeks / PLATEAU_WEEKS));
   const step = Math.min(numSteps - 1, Math.floor(weekIndex / PLATEAU_WEEKS));
   const progress = numSteps > 1 ? step / (numSteps - 1) : 1;
@@ -369,7 +414,7 @@ function scheduleWeek(
   daysPerWeek: number,
   qualityTypes: WorkoutType[],
   paces: TrainingPaces,
-  useStrides: boolean,
+  group: GoalGroup,
   isRecovery: boolean,
   isTaper: boolean,
   weekInPhase: number,
@@ -380,9 +425,20 @@ function scheduleWeek(
   // Longão no domingo (dia 7).
   days[6] = 'L';
 
+  // Bloco em ritmo M dentro do longão (Daniels, caps. 15–16): específico da
+  // prova pra maratona (fases III–IV) e meia/15K (fase IV), em semanas
+  // alternadas (fora de recuperação/taper). O longão com M conta como sessão
+  // de qualidade, então nessas semanas sobra só 1 sessão no meio da semana —
+  // é o padrão 2Q dos planos de maratona do livro.
+  const mInLong =
+    !isRecovery &&
+    !isTaper &&
+    weekInPhase % 2 === 1 &&
+    ((group === 'maratona' && phase >= 3) || (group === '15k-meia' && phase === 4));
+
   // Dias de qualidade (terça e quinta), limitados por recuperação e dias/semana.
   let maxQuality = qualityTypes.length;
-  if (isRecovery || isTaper) maxQuality = Math.min(maxQuality, 1);
+  if (isRecovery || isTaper || mInLong) maxQuality = Math.min(maxQuality, 1);
   if (daysPerWeek <= 3) maxQuality = Math.min(maxQuality, 1);
   const qSlots = [1, 3]; // índices: terça, quinta
   const builtByDay: Record<number, QualitySession> = {};
@@ -450,17 +506,57 @@ function scheduleWeek(
   }
 
   const plainECount = eDayIndices.length - (midIdx >= 0 ? 1 : 0);
-  // Dias E comuns nunca passam da corrida média (senão o nome inverte).
+  // Dias E comuns nunca passam da corrida média (senão o nome inverte); piso de
+  // 3 km e arredondamento pra baixo pra não estourar o volume-alvo da semana.
   const plainECap = midIdx >= 0 ? Math.min(eCap, midKm) : eCap;
-  const perE = plainECount > 0 ? clamp(round((remaining - midKm) / plainECount), 4, plainECap) : 0;
+  const perE = plainECount > 0 ? clamp(Math.floor((remaining - midKm) / plainECount), 3, plainECap) : 0;
+
+  // Tamanho do bloco M no longão: progride de ~30% a 45% do longão, respeitando
+  // o teto de 20% do volume semanal para corrida em M.
+  let longMKm = 0;
+  if (mInLong) {
+    const frac = clamp(0.3 + 0.05 * (weekInPhase - 1), 0.3, 0.45);
+    longMKm = Math.min(round(longKm * frac), round(weeklyKm * 0.2), 29);
+  }
+
+  // Força/prevenção (20–30 min) acoplada a dias E: 2×/semana (1× no taper).
+  // Nunca em dia de qualidade nem no longão.
+  const strengthTarget = isTaper ? 1 : 2;
+  const strengthDays = new Set<number>();
+  for (const idx of [0, 2, 4, 5, 1, 3]) {
+    if (strengthDays.size >= strengthTarget) break;
+    if (days[idx] === 'E') strengthDays.add(idx);
+  }
 
   return days.map((type, i) => {
     const day = i + 1;
     const dayName = DAY_NAMES[i];
+    const strength = strengthDays.has(i);
     if (type === 'Rest') {
-      return { day, dayName, type, title: 'Descanso', description: 'Descanso ou mobilidade leve.', distanceKm: 0, quality: false };
+      return {
+        day,
+        dayName,
+        type,
+        title: 'Descanso',
+        description: 'Descanso ou mobilidade leve.',
+        distanceKm: 0,
+        quality: false,
+        strength: false,
+      };
     }
     if (type === 'L') {
+      if (longMKm > 0) {
+        return {
+          day,
+          dayName,
+          type,
+          title: `Longão com bloco M — ${longKm} km`,
+          description: `${longKm - longMKm} km em ritmo fácil (E: ${paces.easySlow}–${paces.easyFast}/km) + ${longMKm} km finais em ritmo M (${paces.marathon}/km). Específico de prova: treine hidratação e nutrição como no dia da competição.`,
+          distanceKm: longKm,
+          quality: true,
+          strength: false,
+        };
+      }
       return {
         day,
         dayName,
@@ -469,6 +565,7 @@ function scheduleWeek(
         description: `${longKm} km em ritmo fácil (E: ${paces.easySlow}–${paces.easyFast}/km). Base aeróbica; mantenha conversável.`,
         distanceKm: longKm,
         quality: false,
+        strength: false,
       };
     }
     if (type === 'E') {
@@ -481,12 +578,13 @@ function scheduleWeek(
           description: `${midKm} km em ritmo E (${paces.easySlow}–${paces.easyFast}/km). Segunda corrida mais longa da semana — reforça a base aeróbica sem a carga do longão.`,
           distanceKm: midKm,
           quality: false,
+          strength,
         };
       }
       // Meio de semana (terça a sexta): dias de E que sobraram sem qualidade
-      // são os candidatos naturais pra strides — inclui terça/quinta, que é
-      // onde o iniciante com poucos dias por semana efetivamente corre.
-      const strides = useStrides && i >= 1 && i <= 4;
+      // levam strides a temporada inteira — preservam economia de corrida e
+      // velocidade de perna com custo quase zero (Daniels, cap. 4).
+      const strides = i >= 1 && i <= 4;
       return {
         day,
         dayName,
@@ -499,6 +597,7 @@ function scheduleWeek(
         }`,
         distanceKm: perE,
         quality: false,
+        strength,
       };
     }
     // Qualidade
@@ -512,6 +611,7 @@ function scheduleWeek(
       description: (built?.description ?? '') + ` Total aprox.: ${km} km com aquecimento e soltura.`,
       distanceKm: km,
       quality: true,
+      strength: false,
     };
   });
 }
@@ -530,8 +630,14 @@ export function generatePlan(input: PlanInput): GeneratedPlan {
   const minDays = MIN_DAYS_BY_EXPERIENCE[input.experience ?? ''] ?? 0;
   const daysPerWeek = clamp(Math.max(input.daysPerWeek ?? 5, minDays), 3, 7);
   const start = input.weeklyKm && input.weeklyKm > 0 ? input.weeklyKm : defaultWeeklyKm(input.experience);
-  const peak = round(Math.max(start, start * 1.25));
+  // Pico proporcional à duração do plano: mais semanas dão espaço pra subir
+  // mais volume com segurança (~+2%/semana, entre +10% e +35%).
+  const peakFactor = clamp(1 + totalWeeks * 0.02, 1.1, 1.35);
+  const peak = round(Math.max(start, start * peakFactor));
   const paces = getTrainingPaces(input.vdot);
+  const group = goalGroup(input.goalDistance);
+  // Maratona pede polimento mais longo (3 semanas); demais provas, 2.
+  const taperWeeks = group === 'maratona' ? 3 : 2;
 
   const phases = splitPhases(totalWeeks);
 
@@ -543,12 +649,11 @@ export function generatePlan(input: PlanInput): GeneratedPlan {
 
     const weekNumber = index + 1;
     const weeksFromEnd = totalWeeks - weekNumber; // 0 = última
-    const isTaper = phase === 4 && weeksFromEnd <= 1; // últimas 2 semanas
+    const isTaper = phase === 4 && weeksFromEnd <= taperWeeks - 1;
     const isRecovery = !isTaper && weekNumber % 4 === 0; // toda 4ª semana
 
     const weeklyKm = weeklyVolume(index, totalWeeks, phase, start, peak, isRecovery, isTaper, weeksFromEnd);
-    const useStrides = phase === 1 || phase === 2;
-    const qualityTypes = qualityTypesForPhase(phase, input.goalDistance);
+    const qualityTypes = qualityTypesForPhase(phase, group);
 
     const workouts = scheduleWeek(
       weekNumber,
@@ -557,7 +662,7 @@ export function generatePlan(input: PlanInput): GeneratedPlan {
       daysPerWeek,
       qualityTypes,
       paces,
-      useStrides,
+      group,
       isRecovery,
       isTaper,
       weekInPhase,
@@ -566,7 +671,7 @@ export function generatePlan(input: PlanInput): GeneratedPlan {
 
     const totalKm = workouts.reduce((sum, w) => sum + w.distanceKm, 0);
 
-    let focus = PHASE_FOCUS[phase];
+    let focus = phaseFocus(phase, group);
     if (isTaper) focus = 'Polimento (taper): volume reduzido, mantendo um pouco de ritmo. Chegue descansado na prova.';
     else if (isRecovery) focus = 'Semana de recuperação: volume reduzido (~20%) para absorver a carga.';
 
