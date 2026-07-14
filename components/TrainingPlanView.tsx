@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ArrowLeft, Calendar, TrendingUp, Route } from 'lucide-react';
-import { generatePlan, weeksUntil, type WorkoutType, type PlannedWeek } from '@/lib/plan-generator';
+import { generatePlan, getPlanPosition, type WorkoutType, type PlannedWeek } from '@/lib/plan-generator';
 import type { AthleteRow } from '@/lib/supabase/types';
 
 const typeColors: Record<WorkoutType, string> = {
@@ -13,12 +13,15 @@ const typeColors: Record<WorkoutType, string> = {
   Rest: 'bg-slate-600/30 text-slate-400',
 };
 
-function WeekCard({ week }: { week: PlannedWeek }) {
+function WeekCard({ week, isCurrent = false }: { week: PlannedWeek; isCurrent?: boolean }) {
   return (
-    <div className="glass rounded-2xl p-5">
+    <div className={`glass rounded-2xl p-5 ${isCurrent ? 'ring-1 ring-primary/60' : ''}`}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <span className="text-sm font-bold text-white">Semana {week.weekNumber}</span>
+          {isCurrent && (
+            <span className="text-xs px-2 py-0.5 rounded bg-primary/20 text-primary">semana atual</span>
+          )}
           {week.isRecovery && (
             <span className="text-xs px-2 py-0.5 rounded bg-blue-500/20 text-blue-400">recuperação</span>
           )}
@@ -82,7 +85,10 @@ export function TrainingPlanView({ athlete, backHref, backLabel, title, scope = 
     );
   }
 
-  const totalWeeks = weeksUntil(athlete.goal_date);
+  const { totalWeeks, currentWeek: currentWeekNumber } = getPlanPosition(
+    athlete.plan_start_date,
+    athlete.goal_date
+  );
   const plan = generatePlan({
     vdot: athlete.vdot,
     goalDistance: athlete.goal_distance ?? '10000m (10K)',
@@ -92,7 +98,7 @@ export function TrainingPlanView({ athlete, backHref, backLabel, title, scope = 
     totalWeeks,
   });
 
-  const currentWeek = plan.weeks[0];
+  const currentWeek = plan.weeks[Math.min(currentWeekNumber, plan.weeks.length) - 1];
 
   const paceRows: { label: string; value: string; note?: string }[] = [
     { label: 'E (fácil)', value: `${plan.paces.easySlow}–${plan.paces.easyFast}/km` },
@@ -188,7 +194,7 @@ export function TrainingPlanView({ athlete, backHref, backLabel, title, scope = 
               </div>
               <div className="space-y-4">
                 {group.weeks.map((week) => (
-                  <WeekCard key={week.weekNumber} week={week} />
+                  <WeekCard key={week.weekNumber} week={week} isCurrent={week.weekNumber === currentWeekNumber} />
                 ))}
               </div>
             </section>

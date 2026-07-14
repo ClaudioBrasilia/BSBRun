@@ -145,75 +145,134 @@ function qualityTypesForPhase(
 }
 
 // --- Construtores de sessões de qualidade -----------------------------------
+//
+// Cada construtor recebe a semana dentro da fase (weekInPhase) e o índice da
+// sessão na semana (sessionIndex). Isso dá:
+//  - progressão: a sessão começa em ~75% do orçamento da fase e cresce até 100%;
+//  - variedade: o formato rotaciona a cada semana e entre os dias de qualidade,
+//    em vez de repetir o mesmo treino a fase inteira.
 
-function buildR(weeklyKm: number, paces: TrainingPaces) {
-  const totalM = clamp(weeklyKm * 0.05 * 1000, 1200, 6000);
-  let reps: number;
-  let dist: number;
-  if (totalM / 400 >= 4) {
-    dist = 400;
-    reps = round(totalM / 400);
-  } else {
-    dist = 200;
-    reps = round(totalM / 200);
+interface QualitySession {
+  title: string;
+  description: string;
+  workKm: number;
+}
+
+/** Progressão dentro da fase: ~75% do orçamento na 1ª semana até 100%. */
+function phaseProgress(weekInPhase: number): number {
+  return Math.min(1, 0.75 + 0.1 * (weekInPhase - 1));
+}
+
+// Recuperação de R é COMPLETA (2–3× o tempo do tiro) — recuperação curta (1:1)
+// é característica do treino I, não do R (Daniels, cap. 4).
+const R_RECOVERY =
+  'recuperação completa entre os tiros (2 a 3× o tempo do tiro, trotando ou caminhando)';
+
+function buildR(weeklyKm: number, paces: TrainingPaces, variant: number, progress: number): QualitySession {
+  const totalM = clamp(weeklyKm * 0.05 * 1000, 1200, 6000) * progress;
+  const format = variant % 3;
+
+  if (format === 1 || totalM / 400 < 4) {
+    const reps = clamp(round(totalM / 200), 6, 16);
+    return {
+      title: `Repetições (R) — ${reps}×200m`,
+      description: `Aquecimento fácil, ${reps}×200m em ritmo R (${paces.repetition200} /200m) com ${R_RECOVERY}, depois soltar. Foco em técnica e velocidade sem acidose.`,
+      workKm: (reps * 200) / 1000,
+    };
   }
-  const workKm = (reps * dist) / 1000;
-  const pace = dist === 400 ? paces.repetition400 : paces.repetition200;
+  if (format === 2) {
+    const sets = clamp(round(totalM / 800), 2, 6);
+    return {
+      title: `Repetições (R) — ${sets}×(2×200m + 400m)`,
+      description: `Aquecimento fácil, ${sets} séries de 2×200m (${paces.repetition200} /200m) + 1×400m (${paces.repetition400} /400m) em ritmo R, com ${R_RECOVERY}, depois soltar.`,
+      workKm: (sets * 800) / 1000,
+    };
+  }
+  const reps = clamp(round(totalM / 400), 4, 12);
   return {
-    title: `Repetições (R) — ${reps}×${dist}m`,
-    description: `Aquecimento fácil, ${reps}×${dist}m em ritmo R (${pace} /${dist}m) com recuperação trotando o mesmo tempo, depois soltar. Foco em técnica e velocidade sem acidose.`,
-    workKm,
+    title: `Repetições (R) — ${reps}×400m`,
+    description: `Aquecimento fácil, ${reps}×400m em ritmo R (${paces.repetition400} /400m) com ${R_RECOVERY}, depois soltar. Foco em técnica e velocidade sem acidose.`,
+    workKm: (reps * 400) / 1000,
   };
 }
+
+const I_REP_OPTIONS = [600, 800, 1000, 1200, 1600, 2000];
 
 /** Escolhe a distância do tiro de I para o tempo por repetição ficar entre 3 e 5 min (Daniels). */
 function chooseIntervalDistance(paceSecPerKm: number): number {
   const targetSeconds = 240; // ~4 min, meio do intervalo 3–5 min
   const rawMeters = (targetSeconds / paceSecPerKm) * 1000;
-  const options = [600, 800, 1000, 1200, 1600, 2000];
-  return options.reduce((best, d) => (Math.abs(d - rawMeters) < Math.abs(best - rawMeters) ? d : best));
+  return I_REP_OPTIONS.reduce((best, d) => (Math.abs(d - rawMeters) < Math.abs(best - rawMeters) ? d : best));
 }
 
-function buildI(weeklyKm: number, paces: TrainingPaces) {
+function stepIRep(d: number, delta: number): number {
+  const i = I_REP_OPTIONS.indexOf(d);
+  return I_REP_OPTIONS[clamp(i + delta, 0, I_REP_OPTIONS.length - 1)];
+}
+
+function buildI(weeklyKm: number, paces: TrainingPaces, variant: number, progress: number): QualitySession {
   const paceSecPerKm = parseTimeToSeconds(paces.interval) ?? 240;
-  const rep = chooseIntervalDistance(paceSecPerKm);
+  const base = chooseIntervalDistance(paceSecPerKm);
+  const totalM = clamp(weeklyKm * 0.08 * 1000, 2000, 8000) * progress;
+  const format = variant % 3;
+
+  if (format === 2 && stepIRep(base, 1) !== base) {
+    // Escada: sobe e desce ao redor da distância-base.
+    const seq = [stepIRep(base, -1), base, stepIRep(base, 1), base, stepIRep(base, -1)];
+    while (seq.reduce((a, b) => a + b, 0) > totalM * 1.2 && seq.length > 3) seq.pop();
+    const workM = seq.reduce((a, b) => a + b, 0);
+    const label = seq.join('-');
+    return {
+      title: `Intervalos (I) — escada ${label}m`,
+      description: `Aquecimento, escada de ${label}m em ritmo I (${paces.interval}/km) com trote de recuperação de duração parecida com o tiro anterior (~1:1), depois soltar. Estímulo de VO₂max com variação de distância.`,
+      workKm: workM / 1000,
+    };
+  }
+
+  const rep = format === 1 ? stepIRep(base, -1) : base;
+  const reps = clamp(round(totalM / rep), 3, format === 1 ? 8 : 6);
   const repSeconds = (paceSecPerKm / 1000) * rep;
-
-  const totalM = clamp(weeklyKm * 0.08 * 1000, 2000, 8000);
-  const reps = clamp(round(totalM / rep), 3, 6);
-  const workKm = (reps * rep) / 1000;
-
   return {
     title: `Intervalos (I) — ${reps}×${rep}m`,
     description: `Aquecimento, ${reps}×${rep}m em ritmo I (${paces.interval}/km, ~${formatSeconds(repSeconds)} por tiro) com trote de recuperação de duração parecida (~1:1), depois soltar. Cada tiro entre 3 e 5 min — estímulo de VO₂max.`,
-    workKm,
+    workKm: (reps * rep) / 1000,
   };
 }
 
-function buildT(weeklyKm: number, paces: TrainingPaces) {
-  const totalM = clamp(weeklyKm * 0.1 * 1000, 3000, 12000);
-  if (totalM <= 6000) {
-    const workKm = round(totalM) / 1000;
+function buildT(weeklyKm: number, paces: TrainingPaces, variant: number, progress: number): QualitySession {
+  const totalM = clamp(weeklyKm * 0.1 * 1000, 3000, 12000) * progress;
+  const format = variant % 3;
+
+  if (format === 1 && totalM >= 4800) {
+    const reps = clamp(round(totalM / 1600), 3, 8);
     return {
-      title: `Limiar (T) — tempo contínuo`,
-      description: `Aquecimento, ${workKm.toFixed(1)} km contínuos em ritmo T (${paces.threshold}/km) — esforço "confortavelmente difícil", depois soltar.`,
-      workKm,
+      title: `Limiar (T) — ${reps}×1600m (cruise)`,
+      description: `Aquecimento, ${reps}×1600m em ritmo T (${paces.threshold}/km) com 1 min de trote entre as repetições, depois soltar.`,
+      workKm: (reps * 1600) / 1000,
     };
   }
-  const rep = 1600;
-  const reps = round(totalM / rep);
-  const workKm = (reps * rep) / 1000;
+  if (format === 2 && totalM >= 6400) {
+    const reps = clamp(round(totalM / 3200), 2, 4);
+    return {
+      title: `Limiar (T) — ${reps}×3200m (cruise)`,
+      description: `Aquecimento, ${reps}×3200m em ritmo T (${paces.threshold}/km) com 2 min de trote entre as repetições, depois soltar. Blocos longos, quase um tempo contínuo.`,
+      workKm: (reps * 3200) / 1000,
+    };
+  }
+  const workKm = round(Math.min(totalM, 6400)) / 1000;
   return {
-    title: `Limiar (T) — ${reps}×1600m (cruise)`,
-    description: `Aquecimento, ${reps}×1600m em ritmo T (${paces.threshold}/km) com 1 min de trote entre as repetições, depois soltar.`,
+    title: `Limiar (T) — tempo contínuo`,
+    description: `Aquecimento, ${workKm.toFixed(1)} km contínuos em ritmo T (${paces.threshold}/km) — esforço "confortavelmente difícil", depois soltar.`,
     workKm,
   };
 }
 
-function buildM(weeklyKm: number, paces: TrainingPaces) {
+function buildM(weeklyKm: number, paces: TrainingPaces, weekInPhase: number): QualitySession {
   // Teto do Daniels: o menor entre 18 milhas (~29km) e 20% do volume semanal.
   const capKm = clamp(weeklyKm * 0.2, 4, 29);
-  const workKm = clamp(round(weeklyKm * 0.15), 4, capKm);
+  // Progride ao longo da fase: 12% → 15% → 18% → 20% do volume semanal.
+  const ratio = Math.min(0.2, 0.12 + 0.03 * (weekInPhase - 1));
+  const workKm = clamp(round(weeklyKm * ratio), 4, capKm);
   return {
     title: `Ritmo de Maratona (M) — ${workKm} km`,
     description: `Aquecimento leve e ${workKm} km em ritmo M (${paces.marathon}/km), simulando o ritmo-alvo de prova.`,
@@ -221,16 +280,26 @@ function buildM(weeklyKm: number, paces: TrainingPaces) {
   };
 }
 
-function buildQuality(type: WorkoutType, weeklyKm: number, paces: TrainingPaces) {
+function buildQuality(
+  type: WorkoutType,
+  weeklyKm: number,
+  paces: TrainingPaces,
+  weekInPhase: number,
+  sessionIndex: number
+): QualitySession | null {
+  // Rotaciona o formato semana a semana; o offset por sessão evita que os dois
+  // dias de qualidade da mesma semana saiam idênticos (ex.: Fase II com R+R).
+  const variant = weekInPhase - 1 + sessionIndex;
+  const progress = phaseProgress(weekInPhase);
   switch (type) {
     case 'R':
-      return buildR(weeklyKm, paces);
+      return buildR(weeklyKm, paces, variant, progress);
     case 'I':
-      return buildI(weeklyKm, paces);
+      return buildI(weeklyKm, paces, variant, progress);
     case 'T':
-      return buildT(weeklyKm, paces);
+      return buildT(weeklyKm, paces, variant, progress);
     case 'M':
-      return buildM(weeklyKm, paces);
+      return buildM(weeklyKm, paces, weekInPhase);
     default:
       return null;
   }
@@ -303,6 +372,7 @@ function scheduleWeek(
   useStrides: boolean,
   isRecovery: boolean,
   isTaper: boolean,
+  weekInPhase: number,
   experience?: string | null
 ): PlannedWorkout[] {
   const days: WorkoutType[] = ['E', 'E', 'E', 'E', 'E', 'E', 'E'];
@@ -315,10 +385,12 @@ function scheduleWeek(
   if (isRecovery || isTaper) maxQuality = Math.min(maxQuality, 1);
   if (daysPerWeek <= 3) maxQuality = Math.min(maxQuality, 1);
   const qSlots = [1, 3]; // índices: terça, quinta
-  const usedQuality: WorkoutType[] = [];
+  const builtByDay: Record<number, QualitySession> = {};
   for (let i = 0; i < maxQuality && i < qSlots.length; i++) {
+    const session = buildQuality(qualityTypes[i], weeklyKm, paces, weekInPhase, i);
+    if (!session) continue;
     days[qSlots[i]] = qualityTypes[i];
-    usedQuality.push(qualityTypes[i]);
+    builtByDay[qSlots[i]] = session;
   }
 
   // Dias de descanso: preenche até bater daysPerWeek dias de corrida.
@@ -341,13 +413,13 @@ function scheduleWeek(
   const longKm = clamp(round(weeklyKm * longTargetRatio), 6, Math.max(6, round(longCap)));
   const qualityKm: Record<number, number> = {};
   let qualityTotal = 0;
-  usedQuality.forEach((type, i) => {
-    const built = buildQuality(type, weeklyKm, paces);
-    const wu = 3; // aquecimento + soltura aproximados
-    const km = built ? round(built.workKm + wu) : 5;
-    qualityKm[qSlots[i]] = km;
+  // Aquecimento + soltura: mais longos pra quem tem mais volume semanal.
+  const wu = weeklyKm >= 60 ? 5 : weeklyKm >= 40 ? 4 : 3;
+  for (const [dayIdx, session] of Object.entries(builtByDay)) {
+    const km = round(session.workKm + wu);
+    qualityKm[Number(dayIdx)] = km;
     qualityTotal += km;
-  });
+  }
 
   const eDayIndices = days
     .map((t, i) => ({ t, i }))
@@ -358,7 +430,29 @@ function scheduleWeek(
   // pode passar disso (senão "fácil" vira mais puxado que o próprio longão).
   const eCap = Math.max(4, longKm);
   const remaining = Math.max(0, weeklyKm - longKm - qualityTotal);
-  const perE = eDayIndices.length > 0 ? clamp(round(remaining / eDayIndices.length), 4, eCap) : 0;
+
+  // Um dia E do meio da semana vira "corrida média" (~70% do longão) quando há
+  // dias E e volume suficientes — segunda corrida mais longa da semana, em vez
+  // de diluir tudo em dias idênticos.
+  let midIdx = -1;
+  let midKm = 0;
+  if (eDayIndices.length >= 3) {
+    const midCandidates = [2, 4, 0, 5]; // qua, sex, seg, sáb
+    midIdx = midCandidates.find((i) => eDayIndices.includes(i)) ?? -1;
+    if (midIdx >= 0) {
+      midKm = clamp(round(longKm * 0.7), 5, round(eCap));
+      // Só vale a pena se sobrar o mínimo (4 km/dia) pros demais dias E.
+      if (remaining - midKm < (eDayIndices.length - 1) * 4) {
+        midIdx = -1;
+        midKm = 0;
+      }
+    }
+  }
+
+  const plainECount = eDayIndices.length - (midIdx >= 0 ? 1 : 0);
+  // Dias E comuns nunca passam da corrida média (senão o nome inverte).
+  const plainECap = midIdx >= 0 ? Math.min(eCap, midKm) : eCap;
+  const perE = plainECount > 0 ? clamp(round((remaining - midKm) / plainECount), 4, plainECap) : 0;
 
   return days.map((type, i) => {
     const day = i + 1;
@@ -378,6 +472,17 @@ function scheduleWeek(
       };
     }
     if (type === 'E') {
+      if (i === midIdx) {
+        return {
+          day,
+          dayName,
+          type,
+          title: `Corrida média — ${midKm} km`,
+          description: `${midKm} km em ritmo E (${paces.easySlow}–${paces.easyFast}/km). Segunda corrida mais longa da semana — reforça a base aeróbica sem a carga do longão.`,
+          distanceKm: midKm,
+          quality: false,
+        };
+      }
       // Meio de semana (terça a sexta): dias de E que sobraram sem qualidade
       // são os candidatos naturais pra strides — inclui terça/quinta, que é
       // onde o iniciante com poucos dias por semana efetivamente corre.
@@ -397,7 +502,7 @@ function scheduleWeek(
       };
     }
     // Qualidade
-    const built = buildQuality(type, weeklyKm, paces);
+    const built = builtByDay[i];
     const km = qualityKm[i] ?? 6;
     return {
       day,
@@ -430,7 +535,12 @@ export function generatePlan(input: PlanInput): GeneratedPlan {
 
   const phases = splitPhases(totalWeeks);
 
+  let prevPhase: number | null = null;
+  let weekInPhase = 0;
   const weeks: PlannedWeek[] = phases.map((phase, index) => {
+    weekInPhase = phase === prevPhase ? weekInPhase + 1 : 1;
+    prevPhase = phase;
+
     const weekNumber = index + 1;
     const weeksFromEnd = totalWeeks - weekNumber; // 0 = última
     const isTaper = phase === 4 && weeksFromEnd <= 1; // últimas 2 semanas
@@ -450,6 +560,7 @@ export function generatePlan(input: PlanInput): GeneratedPlan {
       useStrides,
       isRecovery,
       isTaper,
+      weekInPhase,
       input.experience
     );
 
@@ -482,12 +593,49 @@ export function generatePlan(input: PlanInput): GeneratedPlan {
   };
 }
 
-/** Calcula quantas semanas há até a data-alvo (padrão 16 se ausente/invalida). */
-export function weeksUntil(goalDate?: string | null): number {
-  if (!goalDate) return 16;
-  const target = new Date(goalDate).getTime();
-  if (Number.isNaN(target)) return 16;
-  const now = Date.now();
-  const diffWeeks = Math.ceil((target - now) / (7 * 24 * 3600 * 1000));
-  return clamp(diffWeeks, 4, 24);
+// --- Posição no plano --------------------------------------------------------
+
+export interface PlanPosition {
+  totalWeeks: number;
+  /** Semana atual (1-based), sempre dentro de [1, totalWeeks]. */
+  currentWeek: number;
+}
+
+const WEEK_MS = 7 * 24 * 3600 * 1000;
+
+function parseDateMs(value?: string | null): number | null {
+  if (!value) return null;
+  const t = new Date(value).getTime();
+  return Number.isNaN(t) ? null : t;
+}
+
+/**
+ * Posição do atleta no plano, ancorada na data de início (plan_start_date).
+ *
+ * Sem âncora, o plano era regenerado a cada acesso com o horizonte encolhendo
+ * até a prova — e a "semana atual" era sempre a semana 1 (Fase Base). Aqui:
+ *  - a duração total é fixa (início → prova, entre 4 e 24 semanas);
+ *  - a semana atual avança conforme o tempo passa, ancorando o FIM na prova
+ *    (garante que o polimento caia nas semanas certas antes da competição).
+ */
+export function getPlanPosition(
+  planStartDate?: string | null,
+  goalDate?: string | null,
+  now: number = Date.now()
+): PlanPosition {
+  const start = parseDateMs(planStartDate) ?? now;
+  const goal = parseDateMs(goalDate);
+
+  const totalWeeks = goal !== null && goal > start ? clamp(Math.ceil((goal - start) / WEEK_MS), 4, 24) : 16;
+
+  let currentWeek: number;
+  if (goal !== null && goal > now) {
+    // Conta de trás pra frente a partir da prova, pro taper cair no lugar certo.
+    const weeksToGoal = Math.ceil((goal - now) / WEEK_MS);
+    currentWeek = totalWeeks - weeksToGoal + 1;
+  } else {
+    currentWeek = Math.floor((now - start) / WEEK_MS) + 1;
+  }
+
+  return { totalWeeks, currentWeek: clamp(currentWeek, 1, totalWeeks) };
 }

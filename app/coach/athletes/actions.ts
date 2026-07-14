@@ -17,6 +17,13 @@ function optionalNumber(value: FormDataEntryValue | null): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** Data de início do plano: a informada no form, ou hoje (o plano precisa de âncora). */
+function planStartDate(value: FormDataEntryValue | null): string {
+  const s = String(value ?? '').trim();
+  if (s && !Number.isNaN(new Date(s).getTime())) return s;
+  return new Date().toISOString().slice(0, 10);
+}
+
 export async function createAthlete(
   _prev: AthleteFormResult,
   formData: FormData
@@ -59,6 +66,7 @@ export async function createAthlete(
     experience: experienceValue ? (experienceValue as Experience) : null,
     goal_distance: String(formData.get('goal_distance') ?? '').trim() || null,
     goal_date: String(formData.get('goal_date') ?? '').trim() || null,
+    plan_start_date: planStartDate(formData.get('plan_start_date')),
     weekly_km: optionalNumber(formData.get('weekly_km')),
     days_per_week: optionalNumber(formData.get('days_per_week')),
     race_distance: raceDistanceLabel || null,
@@ -116,6 +124,7 @@ export async function updateAthleteDetails(
     experience: experienceValue ? (experienceValue as Experience) : null,
     goal_distance: String(formData.get('goal_distance') ?? '').trim() || null,
     goal_date: String(formData.get('goal_date') ?? '').trim() || null,
+    plan_start_date: planStartDate(formData.get('plan_start_date')),
     weekly_km: optionalNumber(formData.get('weekly_km')),
     days_per_week: optionalNumber(formData.get('days_per_week')),
     notes: String(formData.get('notes') ?? '').trim() || null,
