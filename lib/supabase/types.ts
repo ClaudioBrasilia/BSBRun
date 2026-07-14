@@ -27,6 +27,8 @@ export interface AthleteRow {
   experience: Experience | null;
   goal_distance: string | null;
   goal_date: string | null;
+  /** Âncora do plano de treino: a semana atual é contada a partir daqui. */
+  plan_start_date: string | null;
   weekly_km: number | null;
   days_per_week: number | null;
   race_distance: string | null;
@@ -83,10 +85,11 @@ export interface StravaActivityRow {
 
 export type AthleteInsert = Omit<
   AthleteRow,
-  'id' | 'created_at' | 'updated_at' | 'user_id' | 'invite_code'
+  'id' | 'created_at' | 'updated_at' | 'user_id' | 'invite_code' | 'plan_start_date'
 > & {
   user_id?: string | null;
   invite_code?: string | null;
+  plan_start_date?: string | null;
 };
 export type AthleteUpdate = Partial<AthleteInsert>;
 

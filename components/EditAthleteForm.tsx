@@ -133,6 +133,19 @@ export function EditAthleteForm({ athlete }: { athlete: AthleteRow }) {
             </div>
 
             <div>
+              <label className="block text-sm text-slate-400 mb-1">Início do plano</label>
+              <input
+                name="plan_start_date"
+                type="date"
+                defaultValue={athlete.plan_start_date ?? new Date().toISOString().slice(0, 10)}
+                className={inputClass}
+              />
+              <p className="text-xs text-slate-500 mt-1">
+                A semana atual do plano é contada a partir desta data. Alterar reinicia a periodização.
+              </p>
+            </div>
+
+            <div>
               <label className="block text-sm text-slate-400 mb-1">Observações</label>
               <textarea name="notes" rows={3} defaultValue={athlete.notes ?? ''} className={inputClass} />
             </div>
