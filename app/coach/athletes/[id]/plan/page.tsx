@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { Save, RefreshCw } from 'lucide-react';
 import { getAthlete } from '@/lib/data/athletes';
 import { getSavedWorkouts } from '@/lib/data/workouts';
+import { getActivitiesByDay } from '@/lib/data/strava';
 import { savePlanToDatabase } from '@/app/coach/athletes/actions';
 import { TrainingPlanView } from '@/components/TrainingPlanView';
 import { SavedPlanView } from '@/components/SavedPlanView';
@@ -16,6 +17,7 @@ export default async function AthletePlanPage({ params }: { params: { id: string
   const saveAction = savePlanToDatabase.bind(null, athlete.id);
 
   if (saved.length > 0) {
+    const activitiesByDay = await getActivitiesByDay(athlete.id, saved[0].day);
     return (
       <>
         <SavedPlanView
@@ -25,6 +27,7 @@ export default async function AthletePlanPage({ params }: { params: { id: string
           backHref={`/coach/athletes/${athlete.id}`}
           backLabel="Voltar ao atleta"
           title={`Plano de Treino — ${athlete.name}`}
+          activitiesByDay={activitiesByDay}
         />
         <form action={saveAction} className="mt-8 glass rounded-2xl p-5 flex items-center gap-4">
           <div className="flex-1">
