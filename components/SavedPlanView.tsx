@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { ArrowLeft, Calendar, Check, Pencil, Route, TrendingUp, X } from 'lucide-react';
 import { PHASE_NAMES } from '@/lib/plan-generator';
 import { getTrainingPaces, type TrainingPaces } from '@/lib/vdot';
-import { mondayOfISO, todayISO } from '@/lib/time';
-import { toggleWorkoutCompleted } from '@/app/athlete/(app)/plan/actions';
+import { formatSeconds, mondayOfISO, todayISO } from '@/lib/time';
+import { completeWorkout, uncompleteWorkout } from '@/app/athlete/(app)/plan/actions';
 import { updateSavedWorkout } from '@/app/coach/athletes/actions';
 import type { AthleteRow, WorkoutRow } from '@/lib/supabase/types';
 import type { DayActivitySummary } from '@/lib/data/strava';
@@ -78,8 +78,15 @@ function WorkoutRowItem({
   activities?: DayActivitySummary[];
 }) {
   const [editing, setEditing] = useState(false);
+  const [completing, setCompleting] = useState(false);
   const [pending, startTransition] = useTransition();
   const isRest = workout.type === 'Rest';
+
+  // Pace do realizado informado manualmente (min/km).
+  const realizedPace =
+    workout.realized_distance_km && workout.realized_distance_km > 0 && workout.realized_duration_min
+      ? formatSeconds((workout.realized_duration_min * 60) / workout.realized_distance_km)
+      : null;
 
   return (
     <div
@@ -163,12 +170,64 @@ function WorkoutRowItem({
                 + Força &amp; prevenção (20–30 min) — exercícios na aba Fortalecimento.
               </div>
             )}
+            {workout.realized_distance_km != null && (
+              <div className="text-xs text-emerald-300 mt-1">
+                ✓ Realizado: {workout.realized_distance_km} km
+                {realizedPace ? ` @ ${realizedPace}/km` : ''}
+              </div>
+            )}
             {activities?.map((a, idx) => (
               <div key={idx} className="text-xs text-emerald-300 mt-1">
                 ✓ Realizado (Strava): {a.distanceKm} km{a.pace ? ` @ ${a.pace}/km` : ''}
                 {a.name ? ` — ${a.name}` : ''}
               </div>
             ))}
+            {completing && (
+              <form
+                action={(formData) => {
+                  startTransition(async () => {
+                    await completeWorkout(workout.id, formData);
+                    setCompleting(false);
+                  });
+                }}
+                className="mt-2 p-3 bg-slate-900/70 border border-slate-700 rounded-lg space-y-2"
+              >
+                <p className="text-xs text-slate-400">
+                  Como foi o treino? (opcional — deixe em branco para só marcar como concluído)
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    name="distance_km"
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    inputMode="decimal"
+                    placeholder="km"
+                    className="w-20 px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white"
+                  />
+                  <input
+                    name="duration"
+                    placeholder="tempo (ex: 45:30)"
+                    className="w-36 px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white"
+                  />
+                  <button
+                    type="submit"
+                    disabled={pending}
+                    className="px-3 py-2 bg-green-600 hover:bg-green-500 disabled:opacity-60 text-white text-xs font-semibold rounded-lg"
+                  >
+                    {pending ? 'Salvando...' : 'Concluir treino'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCompleting(false)}
+                    className="px-2 py-2 text-slate-400 hover:text-white"
+                    aria-label="Cancelar"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </form>
+            )}
           </>
         )}
       </div>
@@ -186,11 +245,15 @@ function WorkoutRowItem({
         <button
           type="button"
           disabled={pending}
-          onClick={() =>
-            startTransition(async () => {
-              await toggleWorkoutCompleted(workout.id, !workout.completed);
-            })
-          }
+          onClick={() => {
+            if (workout.completed) {
+              startTransition(async () => {
+                await uncompleteWorkout(workout.id);
+              });
+            } else {
+              setCompleting(true);
+            }
+          }}
           className={`shrink-0 w-7 h-7 rounded-full border flex items-center justify-center transition-all ${
             workout.completed
               ? 'bg-green-500/30 border-green-500 text-green-400'

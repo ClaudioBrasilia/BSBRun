@@ -60,6 +60,8 @@ export function planToWorkoutRows(
         quality: w.quality,
         strength: w.strength,
         completed: false,
+        realized_distance_km: null,
+        realized_duration_min: null,
       });
     }
   }
