@@ -9,6 +9,7 @@ import { mondayOfISO, todayISO } from '@/lib/time';
 import { toggleWorkoutCompleted } from '@/app/athlete/(app)/plan/actions';
 import { updateSavedWorkout } from '@/app/coach/athletes/actions';
 import type { AthleteRow, WorkoutRow } from '@/lib/supabase/types';
+import type { DayActivitySummary } from '@/lib/data/strava';
 
 const typeColors: Record<string, string> = {
   E: 'bg-green-500/20 text-green-400',
@@ -67,12 +68,14 @@ function WorkoutRowItem({
   athleteId,
   paces,
   vdot,
+  activities,
 }: {
   workout: WorkoutRow;
   mode: 'coach' | 'athlete';
   athleteId: string;
   paces: TrainingPaces | null;
   vdot: number | null;
+  activities?: DayActivitySummary[];
 }) {
   const [editing, setEditing] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -160,6 +163,12 @@ function WorkoutRowItem({
                 + Força &amp; prevenção (20–30 min) — exercícios na aba Fortalecimento.
               </div>
             )}
+            {activities?.map((a, idx) => (
+              <div key={idx} className="text-xs text-emerald-300 mt-1">
+                ✓ Realizado (Strava): {a.distanceKm} km{a.pace ? ` @ ${a.pace}/km` : ''}
+                {a.name ? ` — ${a.name}` : ''}
+              </div>
+            ))}
           </>
         )}
       </div>
@@ -203,9 +212,19 @@ interface SavedPlanViewProps {
   backHref: string;
   backLabel: string;
   title: string;
+  /** Atividades do Strava por dia ("YYYY-MM-DD") para o planejado × realizado. */
+  activitiesByDay?: Record<string, DayActivitySummary[]>;
 }
 
-export function SavedPlanView({ athlete, workouts, mode, backHref, backLabel, title }: SavedPlanViewProps) {
+export function SavedPlanView({
+  athlete,
+  workouts,
+  mode,
+  backHref,
+  backLabel,
+  title,
+  activitiesByDay = {},
+}: SavedPlanViewProps) {
   // Agrupa por semana (as linhas já vêm ordenadas por data).
   const weekMap = new Map<number, WorkoutRow[]>();
   for (const w of workouts) {
@@ -338,6 +357,7 @@ export function SavedPlanView({ athlete, workouts, mode, backHref, backLabel, ti
                         athleteId={athlete.id}
                         paces={paces}
                         vdot={athlete.vdot}
+                        activities={activitiesByDay[w.day]}
                       />
                     ))}
                   </div>

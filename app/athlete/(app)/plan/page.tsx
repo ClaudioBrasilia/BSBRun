@@ -1,5 +1,6 @@
 import { getMyAthleteProfile } from '@/lib/data/athletes';
 import { getSavedWorkouts } from '@/lib/data/workouts';
+import { getActivitiesByDay } from '@/lib/data/strava';
 import { TrainingPlanView } from '@/components/TrainingPlanView';
 import { SavedPlanView } from '@/components/SavedPlanView';
 
@@ -20,6 +21,7 @@ export default async function MyPlanPage() {
   const saved = await getSavedWorkouts(athlete.id);
 
   if (saved.length > 0) {
+    const activitiesByDay = await getActivitiesByDay(athlete.id, saved[0].day);
     return (
       <SavedPlanView
         athlete={athlete}
@@ -28,6 +30,7 @@ export default async function MyPlanPage() {
         backHref="/athlete/dashboard"
         backLabel="Voltar ao painel"
         title="Meu Plano de Treino"
+        activitiesByDay={activitiesByDay}
       />
     );
   }
