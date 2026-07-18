@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { calcVDOT } from '@/lib/vdot';
+import { regenerateSavedPlan } from '@/lib/data/workouts';
 import type { AthleteInsert, AthleteUpdate, Experience, Sex } from '@/lib/supabase/types';
 
 export interface AthleteFormResult {
@@ -196,6 +197,39 @@ export async function generateInviteLink(id: string, _formData: FormData) {
   await supabase.from('athletes').update({ invite_code: code }).eq('id', id);
 
   revalidatePath(`/coach/athletes/${id}`);
+}
+
+/** Gera o plano do atleta e o salva treino a treino (substitui o anterior). */
+export async function savePlanToDatabase(id: string, _formData: FormData) {
+  const supabase = createClient();
+  const { data: athlete } = await supabase.from('athletes').select('*').eq('id', id).single();
+  if (!athlete) return;
+
+  await regenerateSavedPlan(athlete);
+
+  revalidatePath(`/coach/athletes/${id}/plan`);
+  revalidatePath('/athlete/plan');
+}
+
+/** Edita um treino salvo (título, descrição, distância). */
+export async function updateSavedWorkout(workoutId: string, athleteId: string, formData: FormData) {
+  const supabase = createClient();
+
+  const title = String(formData.get('title') ?? '').trim();
+  const description = String(formData.get('description') ?? '').trim();
+  const distance = optionalNumber(formData.get('distance_km'));
+
+  await supabase
+    .from('workouts')
+    .update({
+      title: title || null,
+      description: description || null,
+      distance_km: distance,
+    })
+    .eq('id', workoutId);
+
+  revalidatePath(`/coach/athletes/${athleteId}/plan`);
+  revalidatePath('/athlete/plan');
 }
 
 export async function deleteAthlete(formData: FormData) {

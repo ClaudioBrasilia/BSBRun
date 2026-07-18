@@ -64,7 +64,7 @@ export interface PlanInput {
 
 const DAY_NAMES = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 
-const PHASE_NAMES: Record<number, string> = {
+export const PHASE_NAMES: Record<number, string> = {
   1: 'Fase I — Base',
   2: 'Fase II — Qualidade Inicial',
   3: 'Fase III — Qualidade de Transição',

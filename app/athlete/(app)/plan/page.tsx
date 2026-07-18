@@ -1,5 +1,7 @@
 import { getMyAthleteProfile } from '@/lib/data/athletes';
+import { getSavedWorkouts } from '@/lib/data/workouts';
 import { TrainingPlanView } from '@/components/TrainingPlanView';
+import { SavedPlanView } from '@/components/SavedPlanView';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +14,21 @@ export default async function MyPlanPage() {
         <p className="text-slate-300 mb-2">Nenhum perfil de atleta vinculado à sua conta ainda.</p>
         <p className="text-sm text-slate-500">Peça ao seu coach para gerar um novo link de convite.</p>
       </div>
+    );
+  }
+
+  const saved = await getSavedWorkouts(athlete.id);
+
+  if (saved.length > 0) {
+    return (
+      <SavedPlanView
+        athlete={athlete}
+        workouts={saved}
+        mode="athlete"
+        backHref="/athlete/dashboard"
+        backLabel="Voltar ao painel"
+        title="Meu Plano de Treino"
+      />
     );
   }
 

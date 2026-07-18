@@ -53,10 +53,15 @@ export interface WorkoutRow {
   athlete_id: string;
   day: string;
   type: string;
+  title: string | null;
   description: string | null;
   distance_km: number | null;
   target_pace: string | null;
   duration_min: number | null;
+  week_number: number | null;
+  phase: number | null;
+  quality: boolean;
+  strength: boolean;
   completed: boolean;
   created_at: string;
 }
