@@ -63,6 +63,9 @@ export interface WorkoutRow {
   quality: boolean;
   strength: boolean;
   completed: boolean;
+  /** Distância/tempo informados pelo atleta ao concluir (planejado × realizado). */
+  realized_distance_km: number | null;
+  realized_duration_min: number | null;
   created_at: string;
 }
 
