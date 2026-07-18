@@ -3,8 +3,8 @@
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Calendar, Check, Pencil, Route, TrendingUp, X } from 'lucide-react';
-import { PHASE_NAMES, type WorkoutType } from '@/lib/plan-generator';
-import { getTrainingPaces } from '@/lib/vdot';
+import { PHASE_NAMES } from '@/lib/plan-generator';
+import { getTrainingPaces, type TrainingPaces } from '@/lib/vdot';
 import { mondayOfISO, todayISO } from '@/lib/time';
 import { toggleWorkoutCompleted } from '@/app/athlete/(app)/plan/actions';
 import { updateSavedWorkout } from '@/app/coach/athletes/actions';
@@ -33,14 +33,46 @@ function formatShortDate(dateStr: string): string {
   return `${d}/${m}`;
 }
 
+/**
+ * Ritmo alvo calculado com o VDOT ATUAL do atleta (não o da época em que o
+ * plano foi salvo): a estrutura do plano fica congelada, mas os ritmos
+ * acompanham a evolução — Daniels manda atualizar os paces quando o VDOT
+ * muda, sem refazer a periodização.
+ */
+function targetPace(workout: WorkoutRow, paces: TrainingPaces): string | null {
+  switch (workout.type) {
+    case 'E':
+      return `${paces.easySlow}–${paces.easyFast}/km`;
+    case 'L':
+      // Longão com bloco M (marcado como qualidade) mostra os dois ritmos.
+      return workout.quality
+        ? `${paces.easySlow}–${paces.easyFast}/km + bloco M em ${paces.marathon}/km`
+        : `${paces.easySlow}–${paces.easyFast}/km`;
+    case 'M':
+      return `${paces.marathon}/km`;
+    case 'T':
+      return `${paces.threshold}/km`;
+    case 'I':
+      return `${paces.interval}/km`;
+    case 'R':
+      return `${paces.repetition400} por 400m`;
+    default:
+      return null;
+  }
+}
+
 function WorkoutRowItem({
   workout,
   mode,
   athleteId,
+  paces,
+  vdot,
 }: {
   workout: WorkoutRow;
   mode: 'coach' | 'athlete';
   athleteId: string;
+  paces: TrainingPaces | null;
+  vdot: number | null;
 }) {
   const [editing, setEditing] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -117,6 +149,11 @@ function WorkoutRowItem({
             </div>
             {!isRest && workout.description && (
               <div className="text-xs text-slate-400 mt-0.5">{workout.description}</div>
+            )}
+            {!isRest && paces && targetPace(workout, paces) && (
+              <div className="text-xs text-sky-300 mt-1">
+                Ritmo alvo (VDOT atual {vdot}): {targetPace(workout, paces)}
+              </div>
             )}
             {workout.strength && (
               <div className="text-xs text-purple-300 mt-1">
@@ -294,7 +331,14 @@ export function SavedPlanView({ athlete, workouts, mode, backHref, backLabel, ti
                   </div>
                   <div className="space-y-2">
                     {weekMap.get(n)!.map((w) => (
-                      <WorkoutRowItem key={w.id} workout={w} mode={mode} athleteId={athlete.id} />
+                      <WorkoutRowItem
+                        key={w.id}
+                        workout={w}
+                        mode={mode}
+                        athleteId={athlete.id}
+                        paces={paces}
+                        vdot={athlete.vdot}
+                      />
                     ))}
                   </div>
                 </div>
