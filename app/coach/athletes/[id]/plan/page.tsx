@@ -57,25 +57,23 @@ export default async function AthletePlanPage({ params }: { params: { id: string
         backLabel="Voltar ao atleta"
         title={`Plano de Treino — ${athlete.name}`}
       />
-      {athlete.vdot && (
-        <form action={saveAction} className="mt-8 glass rounded-2xl p-5 flex items-center gap-4">
-          <div className="flex-1">
-            <p className="text-sm text-white font-semibold">Salvar plano no banco</p>
-            <p className="text-xs text-slate-500">
-              Grava cada treino com data no calendário. Com o plano salvo, o atleta pode marcar treinos como
-              concluídos e você pode editar sessões individualmente — e o plano fica congelado mesmo que os dados
-              do atleta mudem depois.
-            </p>
-          </div>
-          <button
-            type="submit"
-            className="flex items-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary/90 text-white text-sm font-semibold rounded-xl transition-all shrink-0"
-          >
-            <Save className="w-4 h-4" />
-            Salvar plano
-          </button>
-        </form>
-      )}
+      <form action={saveAction} className="mt-8 glass rounded-2xl p-5 flex items-center gap-4">
+        <div className="flex-1">
+          <p className="text-sm text-white font-semibold">Salvar plano no banco</p>
+          <p className="text-xs text-slate-500">
+            Grava cada treino com data no calendário. Com o plano salvo, o atleta pode marcar treinos como
+            concluídos e você pode editar sessões individualmente — e o plano fica congelado mesmo que os dados
+            do atleta mudem depois. {!athlete.vdot && 'Sem VDOT, salva o Programa Iniciante (do zero à corrida).'}
+          </p>
+        </div>
+        <button
+          type="submit"
+          className="flex items-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary/90 text-white text-sm font-semibold rounded-xl transition-all shrink-0"
+        >
+          <Save className="w-4 h-4" />
+          Salvar plano
+        </button>
+      </form>
     </>
   );
 }
