@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { generatePlan, getPlanPosition, type GeneratedPlan } from '@/lib/plan-generator';
+import { generateBeginnerPlan, BEGINNER_TOTAL_WEEKS } from '@/lib/beginner-plan';
 import { addDaysISO, mondayOfISO, todayISO } from '@/lib/time';
 import type { AthleteRow, WorkoutRow } from '@/lib/supabase/types';
 
@@ -38,7 +39,7 @@ export function planFirstMonday(
 
 /** Converte um plano gerado em linhas da tabela workouts, com datas reais. */
 export function planToWorkoutRows(
-  plan: GeneratedPlan,
+  plan: Pick<GeneratedPlan, 'weeks'>,
   athleteId: string,
   firstMonday: string
 ): Omit<WorkoutRow, 'id' | 'created_at'>[] {
@@ -54,7 +55,7 @@ export function planToWorkoutRows(
         description: w.description,
         distance_km: w.distanceKm,
         target_pace: null,
-        duration_min: null,
+        duration_min: w.durationMin ?? null,
         week_number: week.weekNumber,
         phase: week.phase,
         quality: w.quality,
@@ -73,21 +74,27 @@ export function planToWorkoutRows(
  * plano salvo anterior. Retorna mensagem de erro ou null em caso de sucesso.
  */
 export async function regenerateSavedPlan(athlete: AthleteRow): Promise<string | null> {
-  if (!athlete.vdot) {
-    return 'É preciso ter um VDOT calculado (registre uma prova) antes de salvar o plano.';
+  let plan: Pick<GeneratedPlan, 'weeks'>;
+  let firstMonday: string;
+
+  if (athlete.vdot) {
+    const { totalWeeks } = getPlanPosition(athlete.plan_start_date, athlete.goal_date);
+    plan = generatePlan({
+      vdot: athlete.vdot,
+      goalDistance: athlete.goal_distance ?? '10000m (10K)',
+      weeklyKm: athlete.weekly_km,
+      daysPerWeek: athlete.days_per_week,
+      experience: athlete.experience,
+      totalWeeks,
+    });
+    firstMonday = planFirstMonday(athlete.plan_start_date, athlete.goal_date, totalWeeks);
+  } else {
+    // Sem VDOT: programa iniciante (do zero à corrida), ancorado no início
+    // do plano — a prova-alvo não guia este programa.
+    plan = generateBeginnerPlan(athlete.days_per_week);
+    firstMonday = planFirstMonday(athlete.plan_start_date, null, BEGINNER_TOTAL_WEEKS);
   }
 
-  const { totalWeeks } = getPlanPosition(athlete.plan_start_date, athlete.goal_date);
-  const plan = generatePlan({
-    vdot: athlete.vdot,
-    goalDistance: athlete.goal_distance ?? '10000m (10K)',
-    weeklyKm: athlete.weekly_km,
-    daysPerWeek: athlete.days_per_week,
-    experience: athlete.experience,
-    totalWeeks,
-  });
-
-  const firstMonday = planFirstMonday(athlete.plan_start_date, athlete.goal_date, totalWeeks);
   const rows = planToWorkoutRows(plan, athlete.id, firstMonday);
 
   const supabase = createClient();

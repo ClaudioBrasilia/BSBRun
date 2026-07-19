@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowLeft, Calendar, TrendingUp, Route } from 'lucide-react';
 import { generatePlan, getPlanPosition, type WorkoutType, type PlannedWeek } from '@/lib/plan-generator';
+import { generateBeginnerPlan } from '@/lib/beginner-plan';
 import type { AthleteRow } from '@/lib/supabase/types';
 
 const typeColors: Record<WorkoutType, string> = {
@@ -14,6 +15,9 @@ const typeColors: Record<WorkoutType, string> = {
 };
 
 function WeekCard({ week, isCurrent = false }: { week: PlannedWeek; isCurrent?: boolean }) {
+  // Semanas medidas por tempo (programa iniciante) mostram minutos, não km.
+  const totalMin = week.workouts.reduce((sum, w) => sum + (w.durationMin ?? 0), 0);
+  const totalLabel = week.totalKm > 0 ? `${week.totalKm} km` : totalMin > 0 ? `${totalMin} min` : '';
   return (
     <div className={`glass rounded-2xl p-5 ${isCurrent ? 'ring-1 ring-primary/60' : ''}`}>
       <div className="flex items-center justify-between mb-4">
@@ -29,7 +33,7 @@ function WeekCard({ week, isCurrent = false }: { week: PlannedWeek; isCurrent?: 
             <span className="text-xs px-2 py-0.5 rounded bg-purple-500/20 text-purple-400">polimento</span>
           )}
         </div>
-        <span className="text-sm text-slate-400">{week.totalKm} km</span>
+        <span className="text-sm text-slate-400">{totalLabel}</span>
       </div>
 
       <div className="space-y-2">
@@ -74,18 +78,82 @@ interface TrainingPlanViewProps {
 }
 
 export function TrainingPlanView({ athlete, backHref, backLabel, title, scope = 'full' }: TrainingPlanViewProps) {
+  // Sem VDOT (nunca correu uma prova/teste): Programa Iniciante — do zero à
+  // corrida contínua (plano White do Daniels), medido por tempo, sem ritmos.
   if (!athlete.vdot) {
+    const beginner = generateBeginnerPlan(athlete.days_per_week);
+    // A prova-alvo não guia este programa: a semana atual vem só do início.
+    const { currentWeek: currentWeekNumber } = getPlanPosition(athlete.plan_start_date, null);
+    const currentIdx = Math.min(currentWeekNumber, beginner.totalWeeks) - 1;
+    const visibleWeeks = scope === 'currentWeek' ? [beginner.weeks[currentIdx]] : beginner.weeks;
+
+    const stageGroups: { name: string; focus: string; weeks: PlannedWeek[] }[] = [];
+    for (const week of visibleWeeks) {
+      const last = stageGroups[stageGroups.length - 1];
+      if (last && last.name === week.phaseName) last.weeks.push(week);
+      else stageGroups.push({ name: week.phaseName, focus: week.focus, weeks: [week] });
+    }
+
     return (
       <>
-        <Link href={backHref} className="inline-flex items-center gap-2 text-slate-400 hover:text-white mb-6">
-          <ArrowLeft className="w-4 h-4" />
-          {backLabel}
-        </Link>
-        <div className="glass rounded-2xl p-12 text-center">
-          <p className="text-slate-400">
-            Ainda não há VDOT calculado. É preciso informar uma prova recente para gerar o plano.
+        <div className="mb-8">
+          <Link href={backHref} className="inline-flex items-center gap-2 text-slate-400 hover:text-white mb-4">
+            <ArrowLeft className="w-4 h-4" />
+            {backLabel}
+          </Link>
+          <h1 className="text-3xl font-bold text-white">{title}</h1>
+          <p className="text-slate-400 mt-1">
+            Programa Iniciante — do zero aos 30 minutos de corrida contínua, em {beginner.totalWeeks} semanas.
           </p>
         </div>
+
+        <div className="glass rounded-2xl p-5 mb-8 border border-emerald-500/20">
+          <p className="text-sm text-slate-300">
+            Este é o programa de entrada para quem ainda não tem uma prova ou teste registrado: sessões medidas por
+            <strong className="text-white"> tempo</strong>, alternando caminhada e corrida leve. Ao completá-lo (ou
+            quando conseguir correr 30 minutos sem parar), registre um teste de 5K ou de 12 minutos — o VDOT é
+            calculado e o plano completo com ritmos é desbloqueado automaticamente.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+          <div className="glass rounded-2xl p-4">
+            <div className="text-xs text-slate-400 mb-1">Programa</div>
+            <div className="text-lg font-bold text-white">Iniciante</div>
+          </div>
+          <div className="glass rounded-2xl p-4">
+            <div className="text-xs text-slate-400 mb-1">Duração</div>
+            <div className="text-lg font-bold text-white">{beginner.totalWeeks} sem</div>
+          </div>
+          <div className="glass rounded-2xl p-4">
+            <div className="text-xs text-slate-400 mb-1">Semana atual</div>
+            <div className="text-lg font-bold text-white">
+              {currentWeekNumber} de {beginner.totalWeeks}
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-8">
+          {stageGroups.map((group) => (
+            <section key={group.name}>
+              <div className="mb-4">
+                <h2 className="text-xl font-bold text-white">{group.name}</h2>
+                <p className="text-sm text-slate-400">{group.focus}</p>
+              </div>
+              <div className="space-y-4">
+                {group.weeks.map((week) => (
+                  <WeekCard key={week.weekNumber} week={week} isCurrent={week.weekNumber === currentWeekNumber} />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+
+        {scope === 'currentWeek' && (
+          <p className="text-xs text-slate-500 mt-6 text-center">
+            As próximas semanas aparecem aqui conforme você avança no programa.
+          </p>
+        )}
       </>
     );
   }

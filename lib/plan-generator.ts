@@ -27,6 +27,8 @@ export interface PlannedWorkout {
   title: string;
   description: string;
   distanceKm: number;
+  /** Duração em minutos, para sessões medidas por tempo (programa iniciante). */
+  durationMin?: number;
   quality: boolean;
   /** Sessão de força/prevenção (20–30 min) acoplada ao dia. */
   strength: boolean;
@@ -34,7 +36,8 @@ export interface PlannedWorkout {
 
 export interface PlannedWeek {
   weekNumber: number;
-  phase: 1 | 2 | 3 | 4;
+  /** 1–4 = fases VDOT; 0 = programa iniciante (do zero à corrida). */
+  phase: number;
   phaseName: string;
   focus: string;
   totalKm: number;

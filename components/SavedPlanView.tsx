@@ -310,6 +310,14 @@ export function SavedPlanView({
 
   const paces = athlete.vdot ? getTrainingPaces(athlete.vdot) : null;
   const weeklyKm = (n: number) => weekMap.get(n)!.reduce((sum, w) => sum + (w.distance_km ?? 0), 0);
+  const weeklyMin = (n: number) => weekMap.get(n)!.reduce((sum, w) => sum + (w.duration_min ?? 0), 0);
+  // Semanas medidas por tempo (programa iniciante) mostram minutos, não km.
+  const weekTotalLabel = (n: number) => {
+    const km = Math.round(weeklyKm(n));
+    if (km > 0) return `${km} km`;
+    const min = Math.round(weeklyMin(n));
+    return min > 0 ? `${min} min` : '';
+  };
 
   const visibleWeeks = mode === 'athlete' ? weekNumbers.filter((n) => n === currentWeekNumber) : weekNumbers;
 
@@ -322,7 +330,7 @@ export function SavedPlanView({
           {
             icon: TrendingUp,
             label: 'Volume desta semana',
-            value: currentWeekNumber ? `${Math.round(weeklyKm(currentWeekNumber))}km` : '—',
+            value: currentWeekNumber ? weekTotalLabel(currentWeekNumber) || '—' : '—',
           },
         ]
       : [
@@ -394,7 +402,11 @@ export function SavedPlanView({
         {phaseGroups.map((group) => (
           <section key={`${group.phase}-${group.weeks[0]}`}>
             <div className="mb-4">
-              <h2 className="text-xl font-bold text-white">{PHASE_NAMES[group.phase] ?? `Fase ${group.phase}`}</h2>
+              <h2 className="text-xl font-bold text-white">
+                {group.phase === 0
+                  ? 'Programa Iniciante — do zero à corrida contínua'
+                  : PHASE_NAMES[group.phase] ?? `Fase ${group.phase}`}
+              </h2>
             </div>
             <div className="space-y-4">
               {group.weeks.map((n) => (
@@ -409,7 +421,7 @@ export function SavedPlanView({
                         <span className="text-xs px-2 py-0.5 rounded bg-primary/20 text-primary">semana atual</span>
                       )}
                     </div>
-                    <span className="text-sm text-slate-400">{Math.round(weeklyKm(n))} km</span>
+                    <span className="text-sm text-slate-400">{weekTotalLabel(n)}</span>
                   </div>
                   <div className="space-y-2">
                     {weekMap.get(n)!.map((w) => (
