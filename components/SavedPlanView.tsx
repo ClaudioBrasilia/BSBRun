@@ -250,6 +250,32 @@ function WorkoutRowItem({
                     />
                   </label>
                   {fileError && <p className="text-xs text-red-400 mt-1">{fileError}</p>}
+                  <details className="mt-2">
+                    <summary className="text-xs text-sky-300 cursor-pointer hover:text-sky-200">
+                      Como exportar o arquivo do meu app ou relógio?
+                    </summary>
+                    <ul className="text-xs text-slate-400 mt-2 space-y-1 pl-1">
+                      <li>
+                        <strong className="text-slate-300">Strava:</strong> abra a atividade → menu ••• (canto
+                        superior direito) → <em>Exportar GPX</em>.
+                      </li>
+                      <li>
+                        <strong className="text-slate-300">Garmin Connect:</strong> abra a atividade → engrenagem ⚙
+                        (canto superior direito) → <em>Exportar para TCX</em> (ou GPX).
+                      </li>
+                      <li>
+                        <strong className="text-slate-300">Polar Flow:</strong> abra o treino → ••• →{' '}
+                        <em>Exportar sessão</em> → TCX ou GPX.
+                      </li>
+                      <li>
+                        <strong className="text-slate-300">Coros / Suunto:</strong> abra a atividade no app → menu
+                        de compartilhar → <em>Exportar</em> → GPX/TCX.
+                      </li>
+                      <li className="text-slate-500">
+                        Salve o arquivo no celular e depois toque em “Escolher arquivo” acima para enviá-lo.
+                      </li>
+                    </ul>
+                  </details>
                 </div>
               </form>
             )}
