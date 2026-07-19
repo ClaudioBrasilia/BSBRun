@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { parseTimeToSeconds } from '@/lib/time';
+import { parseActivityFile } from '@/lib/activity-file';
 
 function revalidatePlan() {
   revalidatePath('/athlete/plan');
@@ -31,6 +32,45 @@ export async function completeWorkout(workoutId: string, formData: FormData) {
     .eq('id', workoutId);
 
   revalidatePlan();
+}
+
+/**
+ * Conclui um treino a partir de um arquivo GPX/TCX exportado de qualquer
+ * app ou relógio: extrai distância e duração e preenche o realizado.
+ */
+export async function completeWorkoutFromFile(
+  workoutId: string,
+  formData: FormData
+): Promise<{ error?: string }> {
+  const file = formData.get('file');
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: 'Selecione um arquivo .gpx ou .tcx.' };
+  }
+  if (file.size > 15 * 1024 * 1024) {
+    return { error: 'Arquivo grande demais (máximo 15 MB).' };
+  }
+
+  const parsed = parseActivityFile(await file.text());
+  if (!parsed) {
+    return { error: 'Não consegui ler este arquivo. Exporte o treino como GPX ou TCX e tente de novo.' };
+  }
+
+  const supabase = createClient();
+  const { error } = await supabase
+    .from('workouts')
+    .update({
+      completed: true,
+      realized_distance_km: parsed.distanceKm,
+      realized_duration_min: parsed.durationMin,
+    })
+    .eq('id', workoutId);
+
+  if (error) {
+    return { error: 'Não foi possível salvar. Tente novamente.' };
+  }
+
+  revalidatePlan();
+  return {};
 }
 
 /** Desmarca um treino concluído (limpa também os dados do realizado). */

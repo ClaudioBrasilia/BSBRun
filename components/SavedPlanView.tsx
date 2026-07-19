@@ -6,7 +6,7 @@ import { ArrowLeft, Calendar, Check, Pencil, Route, TrendingUp, X } from 'lucide
 import { PHASE_NAMES } from '@/lib/plan-generator';
 import { getTrainingPaces, type TrainingPaces } from '@/lib/vdot';
 import { formatSeconds, mondayOfISO, todayISO } from '@/lib/time';
-import { completeWorkout, uncompleteWorkout } from '@/app/athlete/(app)/plan/actions';
+import { completeWorkout, completeWorkoutFromFile, uncompleteWorkout } from '@/app/athlete/(app)/plan/actions';
 import { updateSavedWorkout } from '@/app/coach/athletes/actions';
 import type { AthleteRow, WorkoutRow } from '@/lib/supabase/types';
 import type { DayActivitySummary } from '@/lib/data/strava';
@@ -79,6 +79,7 @@ function WorkoutRowItem({
 }) {
   const [editing, setEditing] = useState(false);
   const [completing, setCompleting] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const isRest = workout.type === 'Rest';
 
@@ -225,6 +226,30 @@ function WorkoutRowItem({
                   >
                     <X className="w-4 h-4" />
                   </button>
+                </div>
+                <div className="pt-2 border-t border-slate-800">
+                  <label className="text-xs text-slate-400 block">
+                    ou envie o arquivo do treino (.gpx / .tcx exportado do seu app ou relógio):
+                    <input
+                      type="file"
+                      accept=".gpx,.tcx,application/gpx+xml"
+                      disabled={pending}
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (!f) return;
+                        setFileError(null);
+                        const fd = new FormData();
+                        fd.append('file', f);
+                        startTransition(async () => {
+                          const res = await completeWorkoutFromFile(workout.id, fd);
+                          if (res.error) setFileError(res.error);
+                          else setCompleting(false);
+                        });
+                      }}
+                      className="block mt-1 text-xs text-slate-300 file:mr-2 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:bg-slate-700 file:text-white file:text-xs hover:file:bg-slate-600"
+                    />
+                  </label>
+                  {fileError && <p className="text-xs text-red-400 mt-1">{fileError}</p>}
                 </div>
               </form>
             )}
