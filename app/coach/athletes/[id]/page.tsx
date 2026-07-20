@@ -32,7 +32,7 @@ export default async function AthleteDetailPage({ params }: { params: { id: stri
 
   return (
     <>
-      <div className="flex items-start justify-between mb-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-8">
         <div>
           <Link href="/coach/athletes" className="inline-flex items-center gap-2 text-slate-400 hover:text-white mb-4">
             <ArrowLeft className="w-4 h-4" />
@@ -52,16 +52,14 @@ export default async function AthleteDetailPage({ params }: { params: { id: stri
               .join(' • ') || 'Sem dados adicionais'}
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          {athlete.vdot && (
-            <Link
-              href={`/coach/athletes/${athlete.id}/plan`}
-              className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-xl transition-all text-sm font-semibold"
-            >
-              <CalendarRange className="w-4 h-4" />
-              Gerar plano
-            </Link>
-          )}
+        <div className="flex items-center gap-2 flex-wrap shrink-0">
+          <Link
+            href={`/coach/athletes/${athlete.id}/plan`}
+            className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-xl transition-all text-sm font-semibold"
+          >
+            <CalendarRange className="w-4 h-4" />
+            {athlete.vdot ? 'Gerar plano' : 'Programa iniciante'}
+          </Link>
           <Link
             href={`/coach/athletes/${athlete.id}/edit`}
             className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl transition-all text-sm font-semibold"
