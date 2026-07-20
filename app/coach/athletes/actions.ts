@@ -199,6 +199,21 @@ export async function generateInviteLink(id: string, _formData: FormData) {
   revalidatePath(`/coach/athletes/${id}`);
 }
 
+/**
+ * Desvincula a conta de login do atleta e já gera um novo convite. Usado
+ * quando a conta ficou presa/errada — o plano e os dados do atleta são
+ * mantidos (ligados ao athlete_id, não ao login); só a conta de acesso é
+ * desconectada, e o atleta entra de novo com o link novo.
+ */
+export async function unlinkAthleteAccount(id: string, _formData: FormData) {
+  const supabase = createClient();
+  const code = crypto.randomUUID();
+
+  await supabase.from('athletes').update({ user_id: null, invite_code: code }).eq('id', id);
+
+  revalidatePath(`/coach/athletes/${id}`);
+}
+
 /** Gera o plano do atleta e o salva treino a treino (substitui o anterior). */
 export async function savePlanToDatabase(id: string, _formData: FormData) {
   const supabase = createClient();
