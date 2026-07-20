@@ -37,6 +37,11 @@ export async function updateSession(request: NextRequest) {
   const isAthleteJoin = pathname.startsWith('/athlete/join');
   const isProtected = (pathname.startsWith('/coach') || pathname.startsWith('/athlete')) && !isAthleteJoin;
   const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup');
+  // Página inicial (apresentação): quem já está logado pula direto pro painel.
+  // Importante pro PWA instalado — não importa de onde o atalho foi criado
+  // (start_url do manifest ou a página que estava aberta na hora do
+  // "adicionar à tela inicial"), quem tem sessão sempre cai no lugar certo.
+  const isHome = pathname === '/';
 
   if (!user && isProtected) {
     const url = request.nextUrl.clone();
@@ -45,7 +50,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && isAuthPage) {
+  if (user && (isAuthPage || isHome)) {
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
     const url = request.nextUrl.clone();
     url.pathname = profile?.role === 'athlete' ? '/athlete/dashboard' : '/coach/dashboard';
