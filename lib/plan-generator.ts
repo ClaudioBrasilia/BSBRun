@@ -485,6 +485,16 @@ function scheduleWeek(
     .filter((d) => d.t === 'E')
     .map((d) => d.i);
 
+  // Teto por TEMPO (Daniels): dias fáceis devem ficar em ~30–60 min e a corrida
+  // média até ~80 min — senão, para um corredor mais lento, a mesma distância
+  // vira tempo demais de pernas. Convertemos minutos → km pelo ritmo fácil do
+  // atleta (ponta lenta, conservadora), então a mesma tabela pesa menos km para
+  // quem é mais lento e mais km para quem é mais rápido.
+  const easyPaceMinPerKm = (parseTimeToSeconds(paces.easySlow) ?? 420) / 60;
+  const kmForMinutes = (min: number) => Math.max(3, Math.floor(min / easyPaceMinPerKm));
+  const easyDayCapKm = kmForMinutes(60); // corrida fácil comum ≤ ~60 min
+  const midDayCapKm = kmForMinutes(80); // corrida média ≤ ~80 min
+
   // O longão deve ser sempre a corrida mais longa da semana — nenhum dia de E
   // pode passar disso (senão "fácil" vira mais puxado que o próprio longão).
   const eCap = Math.max(4, longKm);
@@ -499,7 +509,7 @@ function scheduleWeek(
     const midCandidates = [2, 4, 0, 5]; // qua, sex, seg, sáb
     midIdx = midCandidates.find((i) => eDayIndices.includes(i)) ?? -1;
     if (midIdx >= 0) {
-      midKm = clamp(round(longKm * 0.7), 5, round(eCap));
+      midKm = clamp(round(longKm * 0.7), 5, Math.min(round(eCap), midDayCapKm));
       // Só vale a pena se sobrar o mínimo (4 km/dia) pros demais dias E.
       if (remaining - midKm < (eDayIndices.length - 1) * 4) {
         midIdx = -1;
@@ -509,9 +519,10 @@ function scheduleWeek(
   }
 
   const plainECount = eDayIndices.length - (midIdx >= 0 ? 1 : 0);
-  // Dias E comuns nunca passam da corrida média (senão o nome inverte); piso de
-  // 3 km e arredondamento pra baixo pra não estourar o volume-alvo da semana.
-  const plainECap = midIdx >= 0 ? Math.min(eCap, midKm) : eCap;
+  // Dias E comuns nunca passam da corrida média (senão o nome inverte) nem do
+  // teto de ~60 min; piso de 3 km e arredondamento pra baixo pra não estourar
+  // o volume-alvo da semana.
+  const plainECap = Math.min(midIdx >= 0 ? midKm : eCap, easyDayCapKm);
   const perE = plainECount > 0 ? clamp(Math.floor((remaining - midKm) / plainECount), 3, plainECap) : 0;
 
   // Tamanho do bloco M no longão: progride de ~30% a 45% do longão, respeitando
