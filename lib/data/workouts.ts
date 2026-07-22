@@ -41,15 +41,67 @@ export function planFirstMonday(
 export function planToWorkoutRows(
   plan: Pick<GeneratedPlan, 'weeks'>,
   athleteId: string,
-  firstMonday: string
+  firstMonday: string,
+  goalDate?: string | null,
+  goalDistance?: string | null
 ): Omit<WorkoutRow, 'id' | 'created_at'>[] {
   const rows: Omit<WorkoutRow, 'id' | 'created_at'>[] = [];
+  const goal = goalDate && !Number.isNaN(new Date(goalDate).getTime()) ? goalDate : null;
+
   for (const week of plan.weeks) {
     const weekMonday = addDaysISO(firstMonday, (week.weekNumber - 1) * 7);
     for (const w of week.workouts) {
+      const day = addDaysISO(weekMonday, w.day - 1);
+
+      // Dia da prova: substitui o que estiver agendado por um card especial.
+      if (goal && day === goal) {
+        rows.push({
+          athlete_id: athleteId,
+          day,
+          type: 'Race',
+          title: `🏁 Dia da Prova${goalDistance ? ` — ${goalDistance}` : ''}`,
+          description:
+            'É pra isso que você treinou! Aqueça com 10–15 min de trote leve e 2–3 strides, confie no ritmo treinado e boa prova!',
+          distance_km: 0,
+          target_pace: null,
+          duration_min: null,
+          week_number: week.weekNumber,
+          phase: week.phase,
+          quality: true,
+          strength: false,
+          completed: false,
+          realized_distance_km: null,
+          realized_duration_min: null,
+        });
+        continue;
+      }
+
+      // Dias depois da prova viram recuperação — nada de longão pós-prova.
+      if (goal && day > goal) {
+        rows.push({
+          athlete_id: athleteId,
+          day,
+          type: 'Rest',
+          title: 'Descanso — pós-prova',
+          description:
+            'Prova concluída! Descanso total ou caminhada leve. Retome trotes leves só depois de alguns dias, conforme o corpo pedir.',
+          distance_km: 0,
+          target_pace: null,
+          duration_min: null,
+          week_number: week.weekNumber,
+          phase: week.phase,
+          quality: false,
+          strength: false,
+          completed: false,
+          realized_distance_km: null,
+          realized_duration_min: null,
+        });
+        continue;
+      }
+
       rows.push({
         athlete_id: athleteId,
-        day: addDaysISO(weekMonday, w.day - 1),
+        day,
         type: w.type,
         title: w.title,
         description: w.description,
@@ -74,12 +126,11 @@ export function planToWorkoutRows(
  * plano salvo anterior. Retorna mensagem de erro ou null em caso de sucesso.
  */
 export async function regenerateSavedPlan(athlete: AthleteRow): Promise<string | null> {
-  let plan: Pick<GeneratedPlan, 'weeks'>;
-  let firstMonday: string;
+  let rows: Omit<WorkoutRow, 'id' | 'created_at'>[];
 
   if (athlete.vdot) {
     const { totalWeeks } = getPlanPosition(athlete.plan_start_date, athlete.goal_date);
-    plan = generatePlan({
+    const plan = generatePlan({
       vdot: athlete.vdot,
       goalDistance: athlete.goal_distance ?? '10000m (10K)',
       weeklyKm: athlete.weekly_km,
@@ -87,15 +138,15 @@ export async function regenerateSavedPlan(athlete: AthleteRow): Promise<string |
       experience: athlete.experience,
       totalWeeks,
     });
-    firstMonday = planFirstMonday(athlete.plan_start_date, athlete.goal_date, totalWeeks);
+    const firstMonday = planFirstMonday(athlete.plan_start_date, athlete.goal_date, totalWeeks);
+    rows = planToWorkoutRows(plan, athlete.id, firstMonday, athlete.goal_date, athlete.goal_distance);
   } else {
     // Sem VDOT: programa iniciante (do zero à corrida), ancorado no início
     // do plano — a prova-alvo não guia este programa.
-    plan = generateBeginnerPlan(athlete.days_per_week);
-    firstMonday = planFirstMonday(athlete.plan_start_date, null, BEGINNER_TOTAL_WEEKS);
+    const plan = generateBeginnerPlan(athlete.days_per_week);
+    const firstMonday = planFirstMonday(athlete.plan_start_date, null, BEGINNER_TOTAL_WEEKS);
+    rows = planToWorkoutRows(plan, athlete.id, firstMonday);
   }
-
-  const rows = planToWorkoutRows(plan, athlete.id, firstMonday);
 
   const supabase = createClient();
   const { error: deleteError } = await supabase.from('workouts').delete().eq('athlete_id', athlete.id);

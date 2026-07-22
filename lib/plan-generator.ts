@@ -18,7 +18,7 @@ import { parseTimeToSeconds, formatSeconds } from './time';
 //    4ª e polimento (taper) de 2 semanas — 3 para maratona.
 // ============================================================================
 
-export type WorkoutType = 'E' | 'L' | 'M' | 'T' | 'I' | 'R' | 'Rest';
+export type WorkoutType = 'E' | 'L' | 'M' | 'T' | 'I' | 'R' | 'Rest' | 'Race';
 
 export interface PlannedWorkout {
   day: number; // 1 = segunda ... 7 = domingo

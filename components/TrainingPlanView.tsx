@@ -14,6 +14,7 @@ const typeColors: Record<WorkoutType, string> = {
   I: 'bg-orange-500/20 text-orange-400',
   R: 'bg-red-500/20 text-red-400',
   Rest: 'bg-slate-600/30 text-slate-400',
+  Race: 'bg-amber-500/20 text-amber-300',
 };
 
 function WeekCard({
