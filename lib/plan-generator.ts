@@ -397,15 +397,20 @@ function weeklyVolume(
  * em vez de diluir tudo em dias parecidos e monótonos.
  */
 function longRunCapKm(weeklyKm: number, easySlowPace: string, experience?: string | null): number {
+  const paceMinPerKm = (parseTimeToSeconds(easySlowPace) ?? 360) / 60;
+  const kmInMinutes = (min: number) => min / paceMinPerKm;
+  // Teto absoluto por tempo (Daniels): 150 min pra qualquer corredor. Sem isso,
+  // um corredor lento estoura 2,5h de longão mesmo respeitando a % de volume.
+  const hardTimeCap = kmInMinutes(150);
+
   if (experience === 'iniciante' && weeklyKm > 0 && weeklyKm <= 40) {
-    return weeklyKm * 0.5;
+    // Iniciante concentra volume no longão (até 50%), mas nunca acima de 2h.
+    return Math.min(weeklyKm * 0.5, kmInMinutes(120));
   }
   if (weeklyKm < 64) {
-    return weeklyKm * 0.3;
+    return Math.min(weeklyKm * 0.3, hardTimeCap);
   }
-  const paceMinPerKm = (parseTimeToSeconds(easySlowPace) ?? 360) / 60;
-  const kmIn150Min = 150 / paceMinPerKm;
-  return Math.min(weeklyKm * 0.25, kmIn150Min);
+  return Math.min(weeklyKm * 0.25, hardTimeCap);
 }
 
 // --- Agendamento semanal ----------------------------------------------------
@@ -439,10 +444,18 @@ function scheduleWeek(
     weekInPhase % 2 === 1 &&
     ((group === 'maratona' && phase >= 3) || (group === '15k-meia' && phase === 4));
 
-  // Dias de qualidade (terça e quinta), limitados por recuperação e dias/semana.
+  // Dias de qualidade (terça e quinta), limitados para preservar o 80/20 do
+  // Daniels. Duas sessões duras por semana só se sustentam com 5+ dias de
+  // corrida — assim sobram pelo menos 2 dias fáceis + o longão para equilibrar.
+  // Com menos dias (ou volume baixo, que anda junto), 1 sessão dura evita
+  // sobrecarregar quem tem pouca base. Regra por dias, não por km: para o
+  // corredor lento o volume nominal engana (os dias fáceis são curtos em km).
   let maxQuality = qualityTypes.length;
-  if (isRecovery || isTaper || mInLong) maxQuality = Math.min(maxQuality, 1);
-  if (daysPerWeek <= 3) maxQuality = Math.min(maxQuality, 1);
+  if (isRecovery || isTaper) maxQuality = Math.min(maxQuality, 1);
+  if (daysPerWeek < 5) maxQuality = Math.min(maxQuality, 1);
+  // O longão com bloco M já é uma sessão dura: com 5+ dias mantém 1 qualidade
+  // no meio da semana; com menos, o longão-M é a única sessão dura da semana.
+  if (mInLong) maxQuality = Math.min(maxQuality, daysPerWeek >= 5 ? 1 : 0);
   const qSlots = [1, 3]; // índices: terça, quinta
   const builtByDay: Record<number, QualitySession> = {};
   for (let i = 0; i < maxQuality && i < qSlots.length; i++) {
