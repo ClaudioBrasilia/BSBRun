@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowLeft, Calendar, Check, Pencil, Route, TrendingUp, X } from 'lucide-react';
 import { PHASE_NAMES } from '@/lib/plan-generator';
 import { getTrainingPaces, type TrainingPaces } from '@/lib/vdot';
+import { estimateWorkoutDuration } from '@/lib/workout-duration';
 import { formatSeconds, mondayOfISO, todayISO } from '@/lib/time';
 import { completeWorkout, completeWorkoutFromFile, uncompleteWorkout } from '@/app/athlete/(app)/plan/actions';
 import { updateSavedWorkout } from '@/app/coach/athletes/actions';
@@ -164,7 +165,14 @@ function WorkoutRowItem({
             {!isRest && paces && targetPace(workout, paces) && (
               <div className="text-xs text-sky-300 mt-1">
                 Ritmo alvo (VDOT atual {vdot}): {targetPace(workout, paces)}
+                {(() => {
+                  const dur = estimateWorkoutDuration(workout.type, workout.distance_km ?? 0, workout.quality, paces);
+                  return dur ? ` · Duração: ${dur}` : '';
+                })()}
               </div>
+            )}
+            {!isRest && !paces && workout.duration_min != null && (
+              <div className="text-xs text-sky-300 mt-1">Duração: {Math.round(workout.duration_min)} min</div>
             )}
             {workout.strength && (
               <div className="text-xs text-purple-300 mt-1">

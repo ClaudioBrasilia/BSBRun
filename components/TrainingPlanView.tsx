@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { ArrowLeft, Calendar, TrendingUp, Route } from 'lucide-react';
 import { generatePlan, getPlanPosition, type WorkoutType, type PlannedWeek } from '@/lib/plan-generator';
 import { generateBeginnerPlan } from '@/lib/beginner-plan';
+import { estimateWorkoutDuration } from '@/lib/workout-duration';
+import type { TrainingPaces } from '@/lib/vdot';
 import type { AthleteRow } from '@/lib/supabase/types';
 
 const typeColors: Record<WorkoutType, string> = {
@@ -14,7 +16,15 @@ const typeColors: Record<WorkoutType, string> = {
   Rest: 'bg-slate-600/30 text-slate-400',
 };
 
-function WeekCard({ week, isCurrent = false }: { week: PlannedWeek; isCurrent?: boolean }) {
+function WeekCard({
+  week,
+  isCurrent = false,
+  paces = null,
+}: {
+  week: PlannedWeek;
+  isCurrent?: boolean;
+  paces?: TrainingPaces | null;
+}) {
   // Semanas medidas por tempo (programa iniciante) mostram minutos, não km.
   const totalMin = week.workouts.reduce((sum, w) => sum + (w.durationMin ?? 0), 0);
   const totalLabel = week.totalKm > 0 ? `${week.totalKm} km` : totalMin > 0 ? `${totalMin} min` : '';
@@ -51,6 +61,11 @@ function WeekCard({ week, isCurrent = false }: { week: PlannedWeek; isCurrent?: 
             <div className="flex-1 min-w-0">
               <div className="text-sm font-semibold text-white">{w.title}</div>
               {w.type !== 'Rest' && <div className="text-xs text-slate-400 mt-0.5">{w.description}</div>}
+              {w.type !== 'Rest' && paces && estimateWorkoutDuration(w.type, w.distanceKm, w.quality, paces) && (
+                <div className="text-xs text-sky-300 mt-1">
+                  Duração: {estimateWorkoutDuration(w.type, w.distanceKm, w.quality, paces)}
+                </div>
+              )}
               {w.strength && (
                 <div className="text-xs text-purple-300 mt-1">
                   + Força &amp; prevenção (20–30 min) — exercícios na aba Fortalecimento.
@@ -252,7 +267,7 @@ export function TrainingPlanView({ athlete, backHref, backLabel, title, scope = 
             <h2 className="text-xl font-bold text-white">{currentWeek.phaseName}</h2>
             <p className="text-sm text-slate-400">{currentWeek.focus}</p>
           </div>
-          <WeekCard week={currentWeek} />
+          <WeekCard week={currentWeek} paces={plan.paces} />
           <p className="text-xs text-slate-500 mt-6 text-center">
             As próximas semanas aparecem aqui conforme você avança no treinamento.
           </p>
@@ -267,7 +282,12 @@ export function TrainingPlanView({ athlete, backHref, backLabel, title, scope = 
               </div>
               <div className="space-y-4">
                 {group.weeks.map((week) => (
-                  <WeekCard key={week.weekNumber} week={week} isCurrent={week.weekNumber === currentWeekNumber} />
+                  <WeekCard
+                    key={week.weekNumber}
+                    week={week}
+                    isCurrent={week.weekNumber === currentWeekNumber}
+                    paces={plan.paces}
+                  />
                 ))}
               </div>
             </section>
