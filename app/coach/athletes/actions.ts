@@ -214,16 +214,35 @@ export async function unlinkAthleteAccount(id: string, _formData: FormData) {
   revalidatePath(`/coach/athletes/${id}`);
 }
 
-/** Gera o plano do atleta e o salva treino a treino (substitui o anterior). */
-export async function savePlanToDatabase(id: string, _formData: FormData) {
+export interface SavePlanResult {
+  error?: string;
+  savedAt?: string;
+}
+
+/**
+ * Gera o plano do atleta e o salva treino a treino (substitui o anterior).
+ * Retorna o resultado para a UI mostrar sucesso ou o erro real — sem engolir
+ * falhas silenciosamente.
+ */
+export async function savePlanToDatabase(
+  id: string,
+  _prev: SavePlanResult,
+  _formData: FormData
+): Promise<SavePlanResult> {
   const supabase = createClient();
   const { data: athlete } = await supabase.from('athletes').select('*').eq('id', id).single();
-  if (!athlete) return;
+  if (!athlete) {
+    return { error: 'Atleta não encontrado. Recarregue a página e tente de novo.' };
+  }
 
-  await regenerateSavedPlan(athlete);
+  const error = await regenerateSavedPlan(athlete);
+  if (error) {
+    return { error };
+  }
 
   revalidatePath(`/coach/athletes/${id}/plan`);
   revalidatePath('/athlete/plan');
+  return { savedAt: new Date().toISOString() };
 }
 
 /** Edita um treino salvo (título, descrição, distância). */
