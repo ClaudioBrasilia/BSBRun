@@ -101,13 +101,13 @@ export async function regenerateSavedPlan(athlete: AthleteRow): Promise<string |
   const { error: deleteError } = await supabase.from('workouts').delete().eq('athlete_id', athlete.id);
   if (deleteError) {
     console.error('Erro ao limpar plano anterior:', deleteError.message);
-    return 'Não foi possível substituir o plano anterior. Tente novamente.';
+    return `Não foi possível substituir o plano anterior (${deleteError.message}). Tente novamente.`;
   }
 
   const { error: insertError } = await supabase.from('workouts').insert(rows);
   if (insertError) {
     console.error('Erro ao salvar plano:', insertError.message);
-    return 'Não foi possível salvar o plano. Rode a migração mais recente do banco e tente de novo.';
+    return `Não foi possível salvar o plano (${insertError.message}). Se o erro citar uma coluna inexistente, rode a migração mais recente do banco e tente de novo.`;
   }
   return null;
 }
