@@ -1,0 +1,83 @@
+name: Build Android app (TWA)
+
+on:
+  workflow_dispatch:
+    inputs:
+      versionName:
+        description: "Versão exibida ao usuário (ex: 1.0.0)"
+        required: true
+        default: "1.0.0"
+      versionCode:
+        description: "Código interno da versão (inteiro, sempre maior que o da vez anterior)"
+        required: true
+        default: "1"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Cache Bubblewrap JDK/Android SDK
+        uses: actions/cache@v4
+        with:
+          path: ~/.bubblewrap
+          key: bubblewrap-sdk-${{ runner.os }}
+
+      - name: Install Bubblewrap CLI
+        run: npm install -g @bubblewrap/cli
+
+      - name: Decode signing keystore
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android.keystore
+
+      - name: Set app version
+        run: |
+          node -e "
+            const fs = require('fs');
+            const m = JSON.parse(fs.readFileSync('twa-manifest.json', 'utf8'));
+            m.appVersionName = '${{ inputs.versionName }}';
+            m.appVersionCode = parseInt('${{ inputs.versionCode }}', 10);
+            fs.writeFileSync('twa-manifest.json', JSON.stringify(m, null, 2));
+          "
+
+      - name: Build with Bubblewrap
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          bubblewrap build \
+            --skipPwaValidation \
+            --password="$KEYSTORE_PASSWORD" \
+            --keyPassword="$KEYSTORE_PASSWORD"
+
+      - name: Upload AAB (para a Play Store)
+        uses: actions/upload-artifact@v4
+        with:
+          name: bsbrun-aab-v${{ inputs.versionName }}
+          path: android/app-release-bundle.aab
+          if-no-files-found: warn
+
+      - name: Upload APK (para instalar direto no celular)
+        uses: actions/upload-artifact@v4
+        with:
+          name: bsbrun-apk-v${{ inputs.versionName }}
+          path: android/app-release-signed.apk
+          if-no-files-found: warn
+
+      - name: Remove keystore do runner
+        if: always()
+        run: rm -f android.keystore
