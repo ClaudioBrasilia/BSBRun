@@ -8,6 +8,7 @@ import { parseActivityFile } from '@/lib/activity-file';
 function revalidatePlan() {
   revalidatePath('/athlete/plan');
   revalidatePath('/athlete/dashboard');
+  revalidatePath('/coach/dashboard');
 }
 
 /**
@@ -26,6 +27,7 @@ export async function completeWorkout(workoutId: string, formData: FormData) {
     .from('workouts')
     .update({
       completed: true,
+      completed_at: new Date().toISOString(),
       realized_distance_km: Number.isFinite(distance) && distance! > 0 ? distance : null,
       realized_duration_min: seconds ? Math.round((seconds / 60) * 10) / 10 : null,
     })
@@ -60,6 +62,7 @@ export async function completeWorkoutFromFile(
     .from('workouts')
     .update({
       completed: true,
+      completed_at: new Date().toISOString(),
       realized_distance_km: parsed.distanceKm,
       realized_duration_min: parsed.durationMin,
     })
@@ -78,16 +81,8 @@ export async function uncompleteWorkout(workoutId: string) {
   const supabase = createClient();
   await supabase
     .from('workouts')
-    .update({ completed: false, realized_distance_km: null, realized_duration_min: null })
+    .update({ completed: false, completed_at: null, realized_distance_km: null, realized_duration_min: null })
     .eq('id', workoutId);
-
-  revalidatePlan();
-}
-
-/** Marca/desmarca um treino como concluído. RLS garante que o treino é do atleta logado. */
-export async function toggleWorkoutCompleted(workoutId: string, completed: boolean) {
-  const supabase = createClient();
-  await supabase.from('workouts').update({ completed }).eq('id', workoutId);
 
   revalidatePlan();
 }

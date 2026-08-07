@@ -4,6 +4,53 @@ import { generateBeginnerPlan, BEGINNER_TOTAL_WEEKS } from '@/lib/beginner-plan'
 import { addDaysISO, mondayOfISO, todayISO } from '@/lib/time';
 import type { AthleteRow, WorkoutRow } from '@/lib/supabase/types';
 
+export interface RecentActivityItem {
+  workoutId: string;
+  athleteId: string;
+  athleteName: string;
+  day: string;
+  type: string;
+  title: string | null;
+  completedAt: string;
+  realizedDistanceKm: number | null;
+  realizedDurationMin: number | null;
+}
+
+/**
+ * Treinos concluídos recentemente pelos atletas do coach logado, mais
+ * recente primeiro — feed de "atividade recente" no painel do coach. RLS
+ * garante que só aparecem atletas do próprio coach.
+ */
+export async function getRecentActivity(limit = 15): Promise<RecentActivityItem[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('workouts')
+    .select('id, athlete_id, day, type, title, completed_at, realized_distance_km, realized_duration_min, athlete:athletes(name)')
+    .eq('completed', true)
+    .not('completed_at', 'is', null)
+    .order('completed_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error('Erro ao buscar atividade recente:', error.message);
+    return [];
+  }
+
+  return (data ?? [])
+    .filter((row: any) => row.athlete)
+    .map((row: any) => ({
+      workoutId: row.id,
+      athleteId: row.athlete_id,
+      athleteName: row.athlete.name as string,
+      day: row.day,
+      type: row.type,
+      title: row.title,
+      completedAt: row.completed_at,
+      realizedDistanceKm: row.realized_distance_km,
+      realizedDurationMin: row.realized_duration_min,
+    }));
+}
+
 /** Treinos salvos de um atleta, em ordem de data. RLS garante o acesso. */
 export async function getSavedWorkouts(athleteId: string): Promise<WorkoutRow[]> {
   const supabase = createClient();
@@ -70,6 +117,7 @@ export function planToWorkoutRows(
           quality: true,
           strength: false,
           completed: false,
+          completed_at: null,
           realized_distance_km: null,
           realized_duration_min: null,
         });
@@ -93,6 +141,7 @@ export function planToWorkoutRows(
           quality: false,
           strength: false,
           completed: false,
+          completed_at: null,
           realized_distance_km: null,
           realized_duration_min: null,
         });
@@ -113,6 +162,7 @@ export function planToWorkoutRows(
         quality: w.quality,
         strength: w.strength,
         completed: false,
+        completed_at: null,
         realized_distance_km: null,
         realized_duration_min: null,
       });
