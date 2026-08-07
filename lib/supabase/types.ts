@@ -63,6 +63,8 @@ export interface WorkoutRow {
   quality: boolean;
   strength: boolean;
   completed: boolean;
+  /** Quando o treino foi marcado como concluído (null se nunca foi ou foi desmarcado). */
+  completed_at: string | null;
   /** Distância/tempo informados pelo atleta ao concluir (planejado × realizado). */
   realized_distance_km: number | null;
   realized_duration_min: number | null;

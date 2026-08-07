@@ -1,11 +1,13 @@
 import Link from 'next/link';
 import { Users, TrendingUp, Activity, Plus } from 'lucide-react';
 import { getAthletes } from '@/lib/data/athletes';
+import { getRecentActivity } from '@/lib/data/workouts';
+import { RecentActivityFeed } from '@/components/RecentActivityFeed';
 
 export const dynamic = 'force-dynamic';
 
 export default async function CoachDashboard() {
-  const athletes = await getAthletes();
+  const [athletes, recentActivity] = await Promise.all([getAthletes(), getRecentActivity()]);
 
   const withVdot = athletes.filter((a) => typeof a.vdot === 'number');
   const avgVdot =
@@ -36,7 +38,7 @@ export default async function CoachDashboard() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {stats.map((stat) => (
           <div key={stat.label} className="glass rounded-2xl p-6">
             <div className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center mb-4`}>
@@ -47,6 +49,8 @@ export default async function CoachDashboard() {
           </div>
         ))}
       </div>
+
+      <RecentActivityFeed items={recentActivity} />
     </>
   );
 }
