@@ -1,0 +1,10 @@
+# A keystore de assinatura NUNCA deve ser commitada — é decodificada em
+# tempo de build a partir do secret ANDROID_KEYSTORE_BASE64 no GitHub Actions.
+*.keystore
+*.jks
+
+# Saídas do bubblewrap build.
+app-release-signed.apk
+app-release-bundle.aab
+build/
+.gradle/
