@@ -180,13 +180,13 @@ function qualityTypesForPhase(phase: 1 | 2 | 3 | 4, group: GoalGroup): WorkoutTy
   if (phase === 1) return []; // só E + strides
   switch (group) {
     case 'meio-fundo':
-      return phase === 2 ? ['R', 'R'] : phase === 3 ? ['I', 'R'] : ['R', 'I'];
+      return phase === 2 ? ['R'] : phase === 3 ? ['I', 'R'] : ['R', 'I'];
     case '15k-meia':
-      return phase === 2 ? ['R', 'T'] : phase === 3 ? ['T', 'I'] : ['T', 'M'];
+      return phase === 2 ? ['T'] : phase === 3 ? ['T', 'I'] : ['T', 'M'];
     case 'maratona':
-      return phase === 2 ? ['T', 'R'] : phase === 3 ? ['T', 'I'] : ['T', 'M'];
+      return phase === 2 ? ['T'] : phase === 3 ? ['T', 'I'] : ['T', 'M'];
     default: // 5k-10k
-      return phase === 2 ? ['R', 'R'] : phase === 3 ? ['I', 'T'] : ['T', 'I'];
+      return phase === 2 ? ['R'] : phase === 3 ? ['I', 'T'] : ['T', 'I'];
   }
 }
 
@@ -482,15 +482,25 @@ function scheduleWeek(
   // Iniciante em semana de volume muito baixo: mira o próprio teto (até 50%)
   // pra concentrar o volume no longão, em vez do alvo padrão de ~28%.
   const longTargetRatio = experience === 'iniciante' && weeklyKm > 0 && weeklyKm <= 40 ? 0.5 : 0.28;
-  const longKm = clamp(round(weeklyKm * longTargetRatio), 6, Math.max(6, round(longCap)));
+  // Em semanas curtas, o longão não pode ser maior que o volume disponível.
+  // O piso de 4 km evita criar um longão simbólico, mas não força 6 km quando
+  // isso faria a soma semanal ultrapassar o alvo, especialmente no taper.
+  const longFloor = weeklyKm < 12 ? 4 : 6;
+  const longKm = clamp(round(weeklyKm * longTargetRatio), longFloor, Math.max(longFloor, round(longCap)));
   const qualityKm: Record<number, number> = {};
   let qualityTotal = 0;
   // Aquecimento + soltura: mais longos pra quem tem mais volume semanal.
   const wu = weeklyKm >= 60 ? 5 : weeklyKm >= 40 ? 4 : 3;
   for (const [dayIdx, session] of Object.entries(builtByDay)) {
     const km = round(session.workKm + wu);
-    qualityKm[Number(dayIdx)] = km;
-    qualityTotal += km;
+    // Se não houver orçamento para a sessão completa, priorizamos o volume
+    // fácil e o longão em vez de ultrapassar o volume semanal planejado.
+    if (longKm + qualityTotal + km <= weeklyKm) {
+      qualityKm[Number(dayIdx)] = km;
+      qualityTotal += km;
+    } else {
+      days[Number(dayIdx)] = 'Rest';
+    }
   }
 
   const eDayIndices = days
@@ -498,56 +508,49 @@ function scheduleWeek(
     .filter((d) => d.t === 'E')
     .map((d) => d.i);
 
-  // Teto por TEMPO (Daniels): dias fáceis devem ficar em ~30–60 min e a corrida
-  // média até ~80 min — senão, para um corredor mais lento, a mesma distância
-  // vira tempo demais de pernas. Convertemos minutos → km pelo ritmo fácil do
-  // atleta (ponta lenta, conservadora), então a mesma tabela pesa menos km para
-  // quem é mais lento e mais km para quem é mais rápido.
+  // Teto por tempo para corridas fáceis, preservando os recursos novos da
+  // branch principal sem permitir que pisos artificiais estourem o volume-alvo.
   const easyPaceMinPerKm = (parseTimeToSeconds(paces.easySlow) ?? 420) / 60;
   const kmForMinutes = (min: number) => Math.max(3, Math.floor(min / easyPaceMinPerKm));
-  const easyDayCapKm = kmForMinutes(60); // corrida fácil comum ≤ ~60 min
-  const midDayCapKm = kmForMinutes(80); // corrida média ≤ ~80 min
-
-  // O longão deve ser sempre a corrida mais longa da semana — nenhum dia de E
-  // pode passar disso (senão "fácil" vira mais puxado que o próprio longão).
-  const eCap = Math.max(4, longKm);
+  const easyDayCapKm = kmForMinutes(60);
+  const midDayCapKm = kmForMinutes(80);
+  const eCap = Math.max(0, longKm);
   const remaining = Math.max(0, weeklyKm - longKm - qualityTotal);
 
-  // Um dia E do meio da semana vira "corrida média" (~70% do longão) quando há
-  // dias E e volume suficientes — segunda corrida mais longa da semana, em vez
-  // de diluir tudo em dias idênticos.
   let midIdx = -1;
   let midKm = 0;
   if (eDayIndices.length >= 3) {
-    const midCandidates = [2, 4, 0, 5]; // qua, sex, seg, sáb
+    const midCandidates = [2, 4, 0, 5];
     midIdx = midCandidates.find((i) => eDayIndices.includes(i)) ?? -1;
     if (midIdx >= 0) {
-      midKm = clamp(round(longKm * 0.7), 5, Math.min(round(eCap), midDayCapKm));
-      // Só vale a pena se sobrar o mínimo (4 km/dia) pros demais dias E.
-      if (remaining - midKm < (eDayIndices.length - 1) * 4) {
+      midKm = clamp(round(longKm * 0.7), 3, Math.min(round(eCap), midDayCapKm));
+      if (remaining - midKm < 0) {
         midIdx = -1;
         midKm = 0;
       }
     }
   }
 
-  const plainECount = eDayIndices.length - (midIdx >= 0 ? 1 : 0);
-  // Dias E comuns nunca passam da corrida média (senão o nome inverte) nem do
-  // teto de ~60 min; piso de 3 km e arredondamento pra baixo pra não estourar
-  // o volume-alvo da semana.
+  const plainEIndices = eDayIndices.filter((idx) => idx !== midIdx);
   const plainECap = Math.min(midIdx >= 0 ? midKm : eCap, easyDayCapKm);
-  const perE = plainECount > 0 ? clamp(Math.floor((remaining - midKm) / plainECount), 3, plainECap) : 0;
+  const plainRemaining = Math.max(0, remaining - midKm);
+  const eDistances: Record<number, number> = {};
+  if (midIdx >= 0) eDistances[midIdx] = midKm;
+  if (plainEIndices.length > 0) {
+    const baseE = Math.min(plainECap, Math.max(0, Math.floor((plainRemaining / plainEIndices.length) * 10) / 10));
+    plainEIndices.forEach((idx, position) => {
+      const isLast = position === plainEIndices.length - 1;
+      const residual = plainRemaining - baseE * (plainEIndices.length - 1);
+      eDistances[idx] = isLast ? Math.min(plainECap, Math.max(0, Math.round(residual * 10) / 10)) : baseE;
+    });
+  }
 
-  // Tamanho do bloco M no longão: progride de ~30% a 45% do longão, respeitando
-  // o teto de 20% do volume semanal para corrida em M.
   let longMKm = 0;
   if (mInLong) {
     const frac = clamp(0.3 + 0.05 * (weekInPhase - 1), 0.3, 0.45);
     longMKm = Math.min(round(longKm * frac), round(weeklyKm * 0.2), 29);
   }
 
-  // Força/prevenção (20–30 min) acoplada a dias E: 2×/semana (1× no taper).
-  // Nunca em dia de qualidade nem no longão.
   const strengthTarget = isTaper ? 1 : 2;
   const strengthDays = new Set<number>();
   for (const idx of [0, 2, 4, 5, 1, 3]) {
@@ -617,12 +620,12 @@ function scheduleWeek(
         dayName,
         type,
         title: `Corrida fácil${strides ? ' + strides (retas)' : ''}`,
-        description: `${perE} km em ritmo E (${paces.easySlow}–${paces.easyFast}/km)${
+        description: `${eDistances[i] ?? 0} km em ritmo E (${paces.easySlow}–${paces.easyFast}/km)${
           strides
             ? ', terminando com 4 a 6 strides: tiros leves e rápidos de 15 a 20s (passada larga, boa postura — não é sprint máximo), com 45 a 60s de descanso completo (andando ou parado) entre um e outro.'
             : '.'
         }`,
-        distanceKm: perE,
+        distanceKm: eDistances[i] ?? 0,
         quality: false,
         strength,
       };
