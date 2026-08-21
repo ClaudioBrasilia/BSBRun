@@ -15,25 +15,68 @@ function revalidatePlan() {
  * Conclui um treino, com dados opcionais do realizado (distância km e tempo
  * "mm" ou "hh:mm:ss"). RLS garante que o treino é do atleta logado.
  */
-export async function completeWorkout(workoutId: string, formData: FormData) {
+export async function completeWorkout(workoutId: string, formData: FormData): Promise<{ error?: string }> {
   const supabase = createClient();
 
   const distanceStr = String(formData.get('distance_km') ?? '').trim();
   const distance = distanceStr ? Number(distanceStr.replace(',', '.')) : null;
   const durationStr = String(formData.get('duration') ?? '').trim();
   const seconds = durationStr ? parseTimeToSeconds(durationStr) : null;
+  const rpeStr = String(formData.get('session_rpe') ?? '').trim();
+  const painStr = String(formData.get('pain_score') ?? '').trim();
+  const sessionRpe = rpeStr ? Number(rpeStr) : null;
+  const painScore = painStr ? Number(painStr) : 0;
+  const changedMechanics = formData.get('pain_changed_mechanics') === 'on';
+  const notes = String(formData.get('feedback_notes') ?? '').trim() || null;
 
-  await supabase
+  if (sessionRpe != null && (!Number.isInteger(sessionRpe) || sessionRpe < 0 || sessionRpe > 10)) {
+    return { error: 'O RPE deve ser um número inteiro entre 0 e 10.' };
+  }
+  if (!Number.isInteger(painScore) || painScore < 0 || painScore > 10) {
+    return { error: 'A dor deve ser um número inteiro entre 0 e 10.' };
+  }
+
+  const { data: workout, error: workoutError } = await supabase
+    .from('workouts')
+    .select('athlete_id, realized_duration_min')
+    .eq('id', workoutId)
+    .single();
+  if (workoutError || !workout) return { error: 'Treino não encontrado ou sem permissão.' };
+
+  const realizedDurationMin = seconds
+    ? Math.round((seconds / 60) * 10) / 10
+    : workout.realized_duration_min;
+  const { error: updateError } = await supabase
     .from('workouts')
     .update({
       completed: true,
       completed_at: new Date().toISOString(),
       realized_distance_km: Number.isFinite(distance) && distance! > 0 ? distance : null,
-      realized_duration_min: seconds ? Math.round((seconds / 60) * 10) / 10 : null,
+      realized_duration_min: realizedDurationMin,
     })
     .eq('id', workoutId);
+  if (updateError) return { error: 'Não foi possível salvar a conclusão do treino.' };
+
+  if (sessionRpe != null) {
+    const internalLoad = Math.round((Number(realizedDurationMin ?? 0) * sessionRpe) * 10) / 10;
+    const { error: feedbackError } = await supabase.from('workout_feedback').upsert(
+      {
+        workout_id: workoutId,
+        athlete_id: workout.athlete_id,
+        session_rpe: sessionRpe,
+        pain_score: painScore,
+        pain_changed_mechanics: changedMechanics,
+        internal_load: internalLoad,
+        notes,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'workout_id' }
+    );
+    if (feedbackError) return { error: 'Treino concluído, mas não foi possível salvar o feedback.' };
+  }
 
   revalidatePlan();
+  return {};
 }
 
 /**
@@ -83,6 +126,7 @@ export async function uncompleteWorkout(workoutId: string) {
     .from('workouts')
     .update({ completed: false, completed_at: null, realized_distance_km: null, realized_duration_min: null })
     .eq('id', workoutId);
+  await supabase.from('workout_feedback').delete().eq('workout_id', workoutId);
 
   revalidatePlan();
 }

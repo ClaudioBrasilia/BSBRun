@@ -82,6 +82,7 @@ function WorkoutRowItem({
   const [editing, setEditing] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const isRest = workout.type === 'Rest';
 
@@ -196,16 +197,24 @@ function WorkoutRowItem({
               <form
                 action={(formData) => {
                   startTransition(async () => {
-                    await completeWorkout(workout.id, formData);
-                    setCompleting(false);
+                    setFeedbackError(null);
+                    const result = await completeWorkout(workout.id, formData);
+                    if (result.error) setFeedbackError(result.error);
+                    else setCompleting(false);
                   });
                 }}
                 className="mt-2 p-3 bg-slate-900/70 border border-slate-700 rounded-lg space-y-2"
               >
                 <p className="text-xs text-slate-400">
-                  Como foi o treino? (opcional — deixe em branco para só marcar como concluído)
+                  Registre o realizado e, se possível, o feedback pós-treino. O RPE é a dificuldade global da sessão, de 0 (repouso) a 10 (máximo).
                 </p>
                 <div className="flex flex-wrap items-center gap-2">
+                  <label className="text-[11px] text-slate-500">RPE
+                    <input name="session_rpe" type="number" min="0" max="10" step="1" placeholder="0–10" className="ml-1 w-16 px-2 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white" />
+                  </label>
+                  <label className="text-[11px] text-slate-500">Dor
+                    <input name="pain_score" type="number" min="0" max="10" step="1" defaultValue="0" className="ml-1 w-16 px-2 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white" />
+                  </label>
                   <input
                     name="distance_km"
                     type="number"
@@ -220,6 +229,9 @@ function WorkoutRowItem({
                     placeholder="tempo (ex: 45:30)"
                     className="w-36 px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white"
                   />
+                  <label className="flex items-center gap-1 text-[11px] text-slate-400">
+                    <input name="pain_changed_mechanics" type="checkbox" className="accent-red-500" /> Dor alterou passada/movimento
+                  </label>
                   <button
                     type="submit"
                     disabled={pending}
@@ -236,6 +248,8 @@ function WorkoutRowItem({
                     <X className="w-4 h-4" />
                   </button>
                 </div>
+                <textarea name="feedback_notes" rows={2} placeholder="Observação para o coach (opcional)" className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white placeholder:text-slate-600" />
+                {feedbackError && <p className="text-xs text-red-400">{feedbackError}</p>}
                 <div className="pt-2 border-t border-slate-800">
                   <label className="text-xs text-slate-400 block">
                     ou envie o arquivo do treino (.gpx / .tcx exportado do seu app ou relógio):

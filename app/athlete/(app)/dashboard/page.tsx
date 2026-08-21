@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { TrendingUp, Target, CalendarRange, Dumbbell, ArrowRight } from 'lucide-react';
 import { getMyAthleteProfile } from '@/lib/data/athletes';
 import { daysUntilDate, formatCountdown } from '@/lib/time';
+import WellnessCheckinForm from './WellnessCheckinForm';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,6 +53,10 @@ export default async function AthleteDashboardPage() {
           </div>
           <div className="text-sm text-slate-400">{countdown ?? 'Data da prova'}</div>
         </div>
+      </div>
+
+      <div className="mb-8">
+        <WellnessCheckinForm athleteId={athlete.id} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
