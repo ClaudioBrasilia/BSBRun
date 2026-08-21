@@ -58,8 +58,14 @@ export default function HomePage() {
               Entrar como Coach
             </Link>
             <Link
-              href="/calculator"
+              href="/login"
               className="px-8 py-4 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-xl transition-all hover:scale-105"
+            >
+              Entrar como Atleta
+            </Link>
+            <Link
+              href="/calculator"
+              className="px-8 py-4 bg-slate-700/50 hover:bg-slate-600 text-white font-semibold rounded-xl transition-all hover:scale-105"
             >
               Calculadora de VDOT
             </Link>

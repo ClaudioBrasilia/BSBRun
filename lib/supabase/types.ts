@@ -27,6 +27,8 @@ export interface AthleteRow {
   experience: Experience | null;
   goal_distance: string | null;
   goal_date: string | null;
+  /** Âncora do plano de treino: a semana atual é contada a partir daqui. */
+  plan_start_date: string | null;
   weekly_km: number | null;
   days_per_week: number | null;
   race_distance: string | null;
@@ -51,11 +53,21 @@ export interface WorkoutRow {
   athlete_id: string;
   day: string;
   type: string;
+  title: string | null;
   description: string | null;
   distance_km: number | null;
   target_pace: string | null;
   duration_min: number | null;
+  week_number: number | null;
+  phase: number | null;
+  quality: boolean;
+  strength: boolean;
   completed: boolean;
+  /** Quando o treino foi marcado como concluído (null se nunca foi ou foi desmarcado). */
+  completed_at: string | null;
+  /** Distância/tempo informados pelo atleta ao concluir (planejado × realizado). */
+  realized_distance_km: number | null;
+  realized_duration_min: number | null;
   created_at: string;
 }
 
@@ -83,10 +95,11 @@ export interface StravaActivityRow {
 
 export type AthleteInsert = Omit<
   AthleteRow,
-  'id' | 'created_at' | 'updated_at' | 'user_id' | 'invite_code'
+  'id' | 'created_at' | 'updated_at' | 'user_id' | 'invite_code' | 'plan_start_date'
 > & {
   user_id?: string | null;
   invite_code?: string | null;
+  plan_start_date?: string | null;
 };
 export type AthleteUpdate = Partial<AthleteInsert>;
 

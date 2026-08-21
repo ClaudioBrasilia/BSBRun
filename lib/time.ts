@@ -42,6 +42,27 @@ export function formatCountdown(days: number | null): string | null {
   return `faltam ${days} dia${days > 1 ? 's' : ''}`;
 }
 
+// --- Datas de calendário (strings YYYY-MM-DD, sempre em UTC) ----------------
+
+/** Data de hoje como "YYYY-MM-DD". */
+export function todayISO(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/** Soma dias a uma data "YYYY-MM-DD". */
+export function addDaysISO(dateStr: string, days: number): string {
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+/** Segunda-feira da semana que contém a data (semanas de segunda a domingo). */
+export function mondayOfISO(dateStr: string): string {
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  const dow = (d.getUTCDay() + 6) % 7; // 0 = segunda ... 6 = domingo
+  return addDaysISO(dateStr, -dow);
+}
+
 /** Formata segundos em "mm:ss" ou "h:mm:ss". */
 export function formatSeconds(totalSeconds: number): string {
   const s = Math.round(totalSeconds);

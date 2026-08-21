@@ -112,6 +112,18 @@ export default function NewAthletePage() {
               <input name="goal_date" type="date" className={inputClass} />
             </div>
           </div>
+          <div>
+            <label className="block text-sm text-slate-400 mb-1">Início do plano</label>
+            <input
+              name="plan_start_date"
+              type="date"
+              defaultValue={new Date().toISOString().slice(0, 10)}
+              className={inputClass}
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              A semana atual do plano é contada a partir desta data.
+            </p>
+          </div>
         </div>
 
         <div className="glass rounded-2xl p-6 space-y-4">

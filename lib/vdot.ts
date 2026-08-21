@@ -71,9 +71,11 @@ export function velocityAtIntensity(vdot: number, intensityPct: number): number 
 
 export function velocityToPace(velocityMPerMin: number, unit: 'km' | 'mi' = 'km'): string {
   const divisor = unit === 'km' ? 1000 : 1609.344;
-  const paceMin = divisor / velocityMPerMin;
-  const minutes = Math.floor(paceMin);
-  const seconds = Math.round((paceMin - minutes) * 60);
+  // Arredonda o total de segundos primeiro e só então separa min/seg — assim
+  // 4:59,7 vira "5:00" em vez do inválido "4:60".
+  const totalSeconds = Math.round((divisor / velocityMPerMin) * 60);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
@@ -83,9 +85,9 @@ export function velocityToPace(velocityMPerMin: number, unit: 'km' | 'mi' = 'km'
  * 400m), não em min/km — é como o treino é corrido de fato, em tiros de pista.
  */
 export function velocityToTrackPace(velocityMPerMin: number, distanceM: number): string {
-  const totalSeconds = (distanceM / velocityMPerMin) * 60;
+  const totalSeconds = Math.round((distanceM / velocityMPerMin) * 60);
   const minutes = Math.floor(totalSeconds / 60);
-  const seconds = Math.round(totalSeconds - minutes * 60);
+  const seconds = totalSeconds % 60;
   return minutes > 0 ? `${minutes}:${seconds.toString().padStart(2, '0')}` : `${seconds}`;
 }
 

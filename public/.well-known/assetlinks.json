@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.bsbrun.app",
+      "sha256_cert_fingerprints": [
+        "34:51:5B:EC:03:C0:9F:DF:0E:53:B9:20:A6:96:4F:6E:35:D5:D4:E0:7A:84:99:B1:C2:68:10:23:7D:BA:6A:C0"
+      ]
+    }
+  }
+]

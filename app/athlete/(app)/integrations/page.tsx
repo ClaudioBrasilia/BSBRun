@@ -1,4 +1,4 @@
-import { Activity, RefreshCw } from 'lucide-react';
+import { Activity, RefreshCw, Upload } from 'lucide-react';
 import { getMyAthleteProfile } from '@/lib/data/athletes';
 import { getStravaConnection, getStravaActivities } from '@/lib/data/strava';
 import { isStravaConfigured } from '@/lib/integrations/strava';
@@ -39,7 +39,9 @@ export default async function AthleteIntegrationsPage({
     <>
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white">Integrações</h1>
-        <p className="text-slate-400 mt-1">Conecte apps externos para importar suas corridas automaticamente.</p>
+        <p className="text-slate-400 mt-1">
+          Traga suas corridas para o BSBRun — conectando um app ou enviando o arquivo do treino.
+        </p>
       </div>
 
       {searchParams.error && errorMessages[searchParams.error] && (
@@ -94,6 +96,46 @@ export default async function AthleteIntegrationsPage({
             </a>
           )}
         </div>
+      </div>
+
+      <div className="glass rounded-2xl p-6 mb-8">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="w-12 h-12 bg-gradient-to-br from-sky-500 to-blue-600 rounded-xl flex items-center justify-center shrink-0">
+            <Upload className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h2 className="font-bold text-white">Enviar arquivo do treino (.gpx / .tcx)</h2>
+            <p className="text-sm text-slate-400">
+              Funciona com qualquer app ou relógio, sem precisar conectar conta nenhuma.
+            </p>
+          </div>
+        </div>
+        <p className="text-sm text-slate-300 mb-3">
+          Ao concluir um treino no seu <strong className="text-white">Plano</strong>, você pode enviar o arquivo da
+          corrida — o BSBRun lê a distância e o tempo automaticamente. Veja como exportar do seu app:
+        </p>
+        <ul className="text-sm text-slate-400 space-y-1.5">
+          <li>
+            <strong className="text-slate-200">Strava:</strong> abra a atividade → menu ••• (canto superior direito)
+            → <em>Exportar GPX</em>.
+          </li>
+          <li>
+            <strong className="text-slate-200">Garmin Connect:</strong> abra a atividade → engrenagem ⚙ (canto
+            superior direito) → <em>Exportar para TCX</em> (ou GPX).
+          </li>
+          <li>
+            <strong className="text-slate-200">Polar Flow:</strong> abra o treino → ••• → <em>Exportar sessão</em> →
+            TCX ou GPX.
+          </li>
+          <li>
+            <strong className="text-slate-200">Coros / Suunto:</strong> abra a atividade no app → compartilhar →{' '}
+            <em>Exportar</em> → GPX/TCX.
+          </li>
+        </ul>
+        <p className="text-xs text-slate-500 mt-3">
+          Depois de exportar, vá em <strong className="text-slate-400">Plano</strong> → toque no círculo do treino →
+          “enviar o arquivo do treino”.
+        </p>
       </div>
 
       {connection && (
