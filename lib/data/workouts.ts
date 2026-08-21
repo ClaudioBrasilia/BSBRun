@@ -153,7 +153,9 @@ export function planToWorkoutRows(
         day,
         type: w.type,
         title: w.title,
-        description: w.description,
+        description: w.strength
+          ? `${w.description} + ${w.strengthProgramName ?? 'Força e prevenção'} (${w.strengthDurationMin ?? 20} min): consulte a aba Fortalecimento para exercícios, carga e progressão.`
+          : w.description,
         distance_km: w.distanceKm,
         target_pace: null,
         duration_min: w.durationMin ?? null,

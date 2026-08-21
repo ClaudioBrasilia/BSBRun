@@ -88,4 +88,8 @@ export interface Exercise {
   targetMuscles: string[];
   benefits: string[];
   precautions?: string[];
+  movementPattern?: string;
+  tempo?: string;
+  loadGuidance?: string;
+  progression?: string;
 }

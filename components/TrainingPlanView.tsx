@@ -69,7 +69,7 @@ function WeekCard({
               )}
               {w.strength && (
                 <div className="text-xs text-purple-300 mt-1">
-                  + Força &amp; prevenção (20–30 min) — exercícios na aba Fortalecimento.
+                  + {w.strengthProgramName ?? 'Força e prevenção'} ({w.strengthDurationMin ?? 20} min) — consulte os exercícios e a orientação de progressão na aba Fortalecimento.
                 </div>
               )}
             </div>
