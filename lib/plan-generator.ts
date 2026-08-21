@@ -134,7 +134,9 @@ function qualityTypesForPhase(
     case 1:
       return []; // só E + strides
     case 2:
-      return ['R', 'R'];
+      // Uma sessão R semanal preserva a velocidade sem transformar a fase
+      // introdutória em duas sessões rápidas. O limite de R é semanal (≤5%).
+      return ['R'];
     case 3:
       return ['I', 'T'];
     case 4:
@@ -338,15 +340,27 @@ function scheduleWeek(
   // Iniciante em semana de volume muito baixo: mira o próprio teto (até 50%)
   // pra concentrar o volume no longão, em vez do alvo padrão de ~28%.
   const longTargetRatio = experience === 'iniciante' && weeklyKm > 0 && weeklyKm <= 40 ? 0.5 : 0.28;
-  const longKm = clamp(round(weeklyKm * longTargetRatio), 6, Math.max(6, round(longCap)));
+  // Em semanas curtas, o longão não pode ser maior que o volume disponível.
+  // O piso de 4 km evita criar um longão simbólico, mas não força 6 km quando
+  // isso faria a soma semanal ultrapassar o alvo, especialmente no taper.
+  const longFloor = weeklyKm < 12 ? 4 : 6;
+  const longKm = clamp(round(weeklyKm * longTargetRatio), longFloor, Math.max(longFloor, round(longCap)));
   const qualityKm: Record<number, number> = {};
   let qualityTotal = 0;
   usedQuality.forEach((type, i) => {
     const built = buildQuality(type, weeklyKm, paces);
     const wu = 3; // aquecimento + soltura aproximados
     const km = built ? round(built.workKm + wu) : 5;
-    qualityKm[qSlots[i]] = km;
-    qualityTotal += km;
+    // Se não houver orçamento para a sessão completa, priorizamos o volume
+    // fácil e o longão em vez de ultrapassar o volume semanal planejado.
+    if (longKm + qualityTotal + km <= weeklyKm) {
+      qualityKm[qSlots[i]] = km;
+      qualityTotal += km;
+    } else {
+      // A sessão não cabe no orçamento da semana; o slot vira descanso para
+      // não aumentar silenciosamente o número de dias de corrida.
+      days[qSlots[i]] = 'Rest';
+    }
   });
 
   const eDayIndices = days
@@ -354,11 +368,20 @@ function scheduleWeek(
     .filter((d) => d.t === 'E')
     .map((d) => d.i);
 
-  // O longão deve ser sempre a corrida mais longa da semana — nenhum dia de E
-  // pode passar disso (senão "fácil" vira mais puxado que o próprio longão).
-  const eCap = Math.max(4, longKm);
+  // O longão deve ser sempre a corrida mais longa da semana. Distribuímos
+  // exatamente o saldo restante, sem piso artificial que possa invalidar o
+  // volume semanal alvo ou o taper.
+  const eCap = Math.max(0, longKm);
   const remaining = Math.max(0, weeklyKm - longKm - qualityTotal);
-  const perE = eDayIndices.length > 0 ? clamp(round(remaining / eDayIndices.length), 4, eCap) : 0;
+  const eDistances: Record<number, number> = {};
+  if (eDayIndices.length > 0) {
+    const baseE = Math.min(eCap, Math.max(0, Math.floor((remaining / eDayIndices.length) * 10) / 10));
+    eDayIndices.forEach((idx, position) => {
+      const isLast = position === eDayIndices.length - 1;
+      const residual = remaining - baseE * (eDayIndices.length - 1);
+      eDistances[idx] = isLast ? Math.min(eCap, Math.max(0, Math.round(residual * 10) / 10)) : baseE;
+    });
+  }
 
   return days.map((type, i) => {
     const day = i + 1;
@@ -387,12 +410,12 @@ function scheduleWeek(
         dayName,
         type,
         title: `Corrida fácil${strides ? ' + strides (retas)' : ''}`,
-        description: `${perE} km em ritmo E (${paces.easySlow}–${paces.easyFast}/km)${
+        description: `${eDistances[i] ?? 0} km em ritmo E (${paces.easySlow}–${paces.easyFast}/km)${
           strides
             ? ', terminando com 4 a 6 strides: tiros leves e rápidos de 15 a 20s (passada larga, boa postura — não é sprint máximo), com 45 a 60s de descanso completo (andando ou parado) entre um e outro.'
             : '.'
         }`,
-        distanceKm: perE,
+        distanceKm: eDistances[i] ?? 0,
         quality: false,
       };
     }
