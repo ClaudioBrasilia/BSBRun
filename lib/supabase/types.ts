@@ -48,6 +48,34 @@ export interface VdotHistoryRow {
   recorded_at: string;
 }
 
+export interface AthleteCheckinRow {
+  id: string;
+  athlete_id: string;
+  checkin_date: string;
+  sleep_quality: number;
+  energy: number;
+  muscle_soreness: number;
+  stress: number;
+  motivation: number;
+  illness_symptoms: boolean;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WorkoutFeedbackRow {
+  id: string;
+  workout_id: string;
+  athlete_id: string;
+  session_rpe: number;
+  pain_score: number;
+  pain_changed_mechanics: boolean;
+  internal_load: number;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface WorkoutRow {
   id: string;
   athlete_id: string;

@@ -3,11 +3,13 @@ import { Users, TrendingUp, Activity, Plus } from 'lucide-react';
 import { getAthletes } from '@/lib/data/athletes';
 import { getRecentActivity } from '@/lib/data/workouts';
 import { RecentActivityFeed } from '@/components/RecentActivityFeed';
+import { getAthleteMonitoringSummaries } from '@/lib/data/monitoring';
 
 export const dynamic = 'force-dynamic';
 
 export default async function CoachDashboard() {
   const [athletes, recentActivity] = await Promise.all([getAthletes(), getRecentActivity()]);
+  const monitoring = await getAthleteMonitoringSummaries(athletes);
 
   const withVdot = athletes.filter((a) => typeof a.vdot === 'number');
   const avgVdot =
@@ -49,6 +51,36 @@ export default async function CoachDashboard() {
           </div>
         ))}
       </div>
+
+      <section className="glass rounded-2xl p-6 mb-8">
+        <div className="flex items-center justify-between gap-4 mb-4">
+          <div>
+            <h2 className="font-bold text-white">Monitoramento de carga e bem-estar</h2>
+            <p className="text-xs text-slate-500 mt-1">Indicadores descritivos dos últimos 7–28 dias; não são diagnóstico nem decisão automática.</p>
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="text-xs text-slate-500 border-b border-slate-800">
+              <tr><th className="py-3 pr-4">Atleta</th><th className="py-3 pr-4">Carga 7d</th><th className="py-3 pr-4">Base 28d</th><th className="py-3 pr-4">Recuperação</th><th className="py-3 pr-4">RPE / dor</th><th className="py-3">Status</th></tr>
+            </thead>
+            <tbody>
+              {monitoring.map((item) => {
+                const statusLabel = { normal: 'Normal', atencao: 'Atenção', prioritario: 'Prioritário', sem_dados: 'Sem dados' }[item.status];
+                const statusColor = { normal: 'text-emerald-400', atencao: 'text-amber-400', prioritario: 'text-red-400', sem_dados: 'text-slate-500' }[item.status];
+                return <tr key={item.athlete.id} className="border-b border-slate-800/70 last:border-0">
+                  <td className="py-3 pr-4"><Link href={`/coach/athletes/${item.athlete.id}`} className="text-white hover:text-primary">{item.athlete.name}</Link><div className="text-[11px] text-slate-500">{item.statusReason}</div></td>
+                  <td className="py-3 pr-4 text-slate-300">{item.load7d || '—'}</td>
+                  <td className="py-3 pr-4 text-slate-400">{item.baselineWeekly28d || '—'}</td>
+                  <td className="py-3 pr-4 text-slate-300">{item.recoveryScore ?? '—'}</td>
+                  <td className="py-3 pr-4 text-slate-400">{item.latestRpe ?? '—'} / {item.latestPain ?? '—'}</td>
+                  <td className={`py-3 font-semibold ${statusColor}`}>{statusLabel}</td>
+                </tr>;
+              })}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       <RecentActivityFeed items={recentActivity} />
     </>
