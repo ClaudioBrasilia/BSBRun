@@ -1,5 +1,6 @@
 import { getTrainingPaces, type TrainingPaces } from './vdot';
 import { parseTimeToSeconds, formatSeconds } from './time';
+import { getStrengthProgramForPhase } from './strength-exercises';
 
 // ============================================================================
 // Gerador de planos de treino — metodologia VDOT (4 fases).
@@ -30,8 +31,11 @@ export interface PlannedWorkout {
   /** Duração em minutos, para sessões medidas por tempo (programa iniciante). */
   durationMin?: number;
   quality: boolean;
-  /** Sessão de força/prevenção (20–30 min) acoplada ao dia. */
+  /** Sessão de força/prevenção acoplada ao dia. */
   strength: boolean;
+  strengthProgramId?: string;
+  strengthProgramName?: string;
+  strengthDurationMin?: number;
 }
 
 export interface PlannedWeek {
@@ -551,6 +555,7 @@ function scheduleWeek(
     longMKm = Math.min(round(longKm * frac), round(weeklyKm * 0.2), 29);
   }
 
+  const strengthProgram = getStrengthProgramForPhase(phase, isTaper);
   const strengthTarget = isTaper ? 1 : 2;
   const strengthDays = new Set<number>();
   for (const idx of [0, 2, 4, 5, 1, 3]) {
@@ -609,6 +614,9 @@ function scheduleWeek(
           distanceKm: midKm,
           quality: false,
           strength,
+          strengthProgramId: strength ? strengthProgram.id : undefined,
+          strengthProgramName: strength ? strengthProgram.name : undefined,
+          strengthDurationMin: strength ? Number(strengthProgram.duration.match(/\d+/)?.[0] ?? 20) : undefined,
         };
       }
       // Meio de semana (terça a sexta): dias de E que sobraram sem qualidade
@@ -628,6 +636,9 @@ function scheduleWeek(
         distanceKm: eDistances[i] ?? 0,
         quality: false,
         strength,
+        strengthProgramId: strength ? strengthProgram.id : undefined,
+        strengthProgramName: strength ? strengthProgram.name : undefined,
+        strengthDurationMin: strength ? Number(strengthProgram.duration.match(/\d+/)?.[0] ?? 20) : undefined,
       };
     }
     // Qualidade

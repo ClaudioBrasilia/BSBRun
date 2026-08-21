@@ -24,7 +24,7 @@ const topics: Topic[] = [
   {
     title: 'As 4 fases do plano',
     body:
-      'Fase I — Base: só corrida fácil + strides, sem qualidade. Fase II — Qualidade Inicial: introduz Repetições (R). Fase III — Transição: Intervalos (I) + Limiar (T), a fase mais pesada. Fase IV — Final: Limiar (T) + ritmo de prova (M em provas longas, ou I em provas curtas), com polimento (taper) nas últimas semanas.',
+      'Fase I — Base: corrida fácil + strides, sem qualidade formal. Fase II — Qualidade Inicial: introduz R para meio-fundo e 5K–10K, ou T como alicerce para 15K–maratona. Fase III — Transição: I + T para provas longas e I + R para meio-fundo. Fase IV — Final: T + M para 15K–maratona, ou R/I para meio-fundo e T/I para 5K–10K. A maratona usa três semanas de polimento; as demais provas, duas.',
   },
   {
     title: 'Trava do Longão',
@@ -62,9 +62,14 @@ const topics: Topic[] = [
       'Até 10% do volume semanal. Sessões menores viram um tempo contínuo (ex: 20 minutos correndo em ritmo T); sessões maiores viram "cruise intervals" — repetições de 1600m com apenas 1 minuto de trote entre elas.',
   },
   {
-    title: 'Semanas de recuperação e polimento',
+    title:       'Semanas de recuperação, polimento e força',
     body:
-      'A cada 4ª semana, o volume cai ~20% para o corpo absorver a carga acumulada. Nas duas últimas semanas antes da prova (Fase IV), entra o polimento (taper): o volume reduz progressivamente para o atleta chegar descansado e no pico de forma no dia da prova.',
+      'A cada 4ª semana, o volume cai ~20% para o corpo absorver a carga acumulada. A força acompanha a periodização: Força Base na Fase I, Força e Cadeia Posterior nas Fases II–III, Potência e Manutenção na transição e Manutenção no Polimento. A maratona usa três semanas de taper; as demais provas usam duas. O programa de força não deve ser levado à falha e precisa ser ajustado pelo coach em caso de dor ou fadiga anormal.',
+  },
+  {
+    title: 'Fortalecimento progressivo',
+    body:
+      'Os dias de corrida fácil podem receber duas sessões semanais de força. O programa selecionado depende da fase: começa com técnica e força básica, progride para cadeia posterior e unilateral, introduz potência com baixo volume e reduz a carga no polimento. Cada exercício informa séries, repetições, descanso, orientação de carga e critério de progressão; a aba Fortalecimento detalha as opções.',
   },
   {
     title: 'Progressão de volume em degraus',
@@ -105,11 +110,12 @@ export default function CoachMethodologyPage() {
       <div className="glass rounded-2xl p-6 mt-6">
         <h2 className="font-bold text-white mb-2">Ainda não implementado</h2>
         <p className="text-sm text-slate-400 leading-relaxed">
-          Uma pontuação de carga de treino semanal (pontos por minuto em cada zona de intensidade) ficou no
-          backlog. Também vale registrar: nosso sistema usa 3 níveis de experiência (iniciante, intermediário,
-          avançado) mapeados aos planos Red/Blue do livro — ainda não temos um nível "Elite/Gold" (60+ milhas
-          por semana) nem o plano "White" por tempo (sem meta de quilometragem, com caminhada intercalada) para
-          iniciantes completos.
+          Uma pontuação de carga de treino semanal (pontos por minuto em cada zona de intensidade), histórico de
+          dor/fadiga e ajuste automático por resposta ao treino continuam no backlog. O fortalecimento é uma
+          prescrição inicial progressiva para adultos sem restrições clínicas; não é diagnóstico, tratamento ou
+          garantia de prevenção de lesão. Também vale registrar: nosso sistema usa 3 níveis de experiência
+          (iniciante, intermediário, avançado) mapeados aos planos Red/Blue do livro — ainda não temos um nível
+          "Elite/Gold" nem o plano "White" por tempo com caminhada intercalada para iniciantes completos.
         </p>
       </div>
     </>

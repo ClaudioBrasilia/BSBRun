@@ -47,7 +47,8 @@ export default function CoachStrengthPage() {
                   <p className="text-xs text-slate-400">{program.duration}</p>
                 </div>
               </div>
-              <p className="text-sm text-slate-400 mb-3">{program.description}</p>
+              <p className="text-sm text-slate-400 mb-2">{program.description}</p>
+              <p className="text-xs text-slate-500 mb-3">{program.guidance}</p>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-slate-500">{program.exercises.length} exercícios</span>
                 <span className="text-primary font-semibold">{program.frequency}</span>
@@ -123,6 +124,10 @@ export default function CoachStrengthPage() {
               )}
             </div>
 
+            {exercise.movementPattern && (
+              <div className="mb-3 text-xs text-purple-300">Padrão: {exercise.movementPattern}</div>
+            )}
+
             <div className="mb-4">
               <div className="text-xs text-slate-500 mb-2">Músculos Alvo:</div>
               <div className="flex flex-wrap gap-1">
@@ -133,6 +138,16 @@ export default function CoachStrengthPage() {
                 ))}
               </div>
             </div>
+
+            {exercise.tempo && (
+              <div className="text-xs text-slate-400 mb-2"><span className="text-slate-500">Tempo:</span> {exercise.tempo}</div>
+            )}
+            {exercise.loadGuidance && (
+              <div className="text-xs text-slate-400 mb-2"><span className="text-slate-500">Carga:</span> {exercise.loadGuidance}</div>
+            )}
+            {exercise.progression && (
+              <div className="text-xs text-emerald-300 mb-4"><span className="text-emerald-500">Progressão:</span> {exercise.progression}</div>
+            )}
 
             <div>
               <div className="text-xs text-slate-500 mb-2">Benefícios:</div>
