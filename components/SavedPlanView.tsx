@@ -261,8 +261,8 @@ function WorkoutRowItem({
                         const f = e.target.files?.[0];
                         if (!f) return;
                         setFileError(null);
-                        const fd = new FormData();
-                        fd.append('file', f);
+                        const fd = new FormData(e.currentTarget.form ?? undefined);
+                        fd.set('file', f);
                         startTransition(async () => {
                           const res = await completeWorkoutFromFile(workout.id, fd);
                           if (res.error) setFileError(res.error);

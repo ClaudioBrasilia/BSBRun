@@ -91,13 +91,20 @@ supabase/
 └── migrations/*.sql         # Schema do banco (fonte da verdade)
 ```
 
-## 🔌 Integrações (próximo passo)
+## 🔌 Integrações
 
-A estrutura em `lib/integrations` já está pronta. Para ativar o **Strava**:
+A integração do **Strava** usa OAuth para conexão individual e webhook para sincronização automática de atividades:
 
 1. Registre um app em [strava.com/settings/api](https://www.strava.com/settings/api).
-2. Adicione `STRAVA_CLIENT_ID` e `STRAVA_CLIENT_SECRET` ao ambiente.
-3. Implemente o fluxo OAuth em `app/api/integrations/strava/`.
+2. Adicione ao ambiente do servidor — nunca como `NEXT_PUBLIC_*` — `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET`, `STRAVA_WEBHOOK_VERIFY_TOKEN`, `NEXT_PUBLIC_SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY`.
+3. Configure como callback OAuth: `https://SEU-DOMINIO/api/integrations/strava/callback`.
+4. Configure como callback do webhook: `https://SEU-DOMINIO/api/integrations/strava/webhook`.
+5. Crie uma assinatura de webhook usando a API do Strava, com `verify_token` igual ao valor de `STRAVA_WEBHOOK_VERIFY_TOKEN`. A assinatura é por aplicativo, não por atleta.
+6. O endpoint `GET /api/integrations/strava/webhook` responde ao desafio de validação e o endpoint `POST` recebe eventos de criação, atualização, exclusão e revogação.
+
+O serviço usa `SUPABASE_SERVICE_ROLE_KEY` somente no endpoint server-side do webhook para localizar a conexão pelo ID do atleta Strava e persistir a atividade. Essa chave não pode ser exposta no navegador. O processamento é idempotente por `strava_activity_id`.
+
+Como alternativa, o atleta pode enviar arquivos `.gpx` ou `.tcx` no plano. O upload valida extensão, tamanho e conteúdo XML e também grava RPE, dor e observações quando preenchidos no formulário.
 
 ## 📚 Metodologia
 
