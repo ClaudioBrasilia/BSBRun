@@ -83,3 +83,14 @@ export async function fetchStravaActivities(accessToken: string, perPage = 30): 
   }
   return res.json();
 }
+
+export async function fetchStravaActivity(accessToken: string, activityId: number): Promise<StravaActivity> {
+  const res = await fetch(`${STRAVA_API_BASE}/activities/${activityId}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    throw new Error('Falha ao buscar a atividade do Strava.');
+  }
+  return res.json();
+}

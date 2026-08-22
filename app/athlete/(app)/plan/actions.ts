@@ -95,12 +95,38 @@ export async function completeWorkoutFromFile(
     return { error: 'Arquivo grande demais (máximo 15 MB).' };
   }
 
-  const parsed = parseActivityFile(await file.text());
+  const filename = file.name.toLowerCase();
+  if (!filename.endsWith('.gpx') && !filename.endsWith('.tcx')) {
+    return { error: 'Formato não suportado. Envie um arquivo .gpx ou .tcx.' };
+  }
+
+  const contents = await file.text();
+  if (!contents.trim().startsWith('<')) {
+    return { error: 'O arquivo não parece ser um GPX ou TCX XML válido.' };
+  }
+
+  const parsed = parseActivityFile(contents);
   if (!parsed) {
     return { error: 'Não consegui ler este arquivo. Exporte o treino como GPX ou TCX e tente de novo.' };
   }
 
+  const rpeStr = String(formData.get('session_rpe') ?? '').trim();
+  const painStr = String(formData.get('pain_score') ?? '').trim();
+  const sessionRpe = rpeStr ? Number(rpeStr) : null;
+  const painScore = painStr ? Number(painStr) : 0;
+  const changedMechanics = formData.get('pain_changed_mechanics') === 'on';
+  const notes = String(formData.get('feedback_notes') ?? '').trim() || null;
+  if (sessionRpe != null && (!Number.isInteger(sessionRpe) || sessionRpe < 0 || sessionRpe > 10)) {
+    return { error: 'O RPE deve ser um número inteiro entre 0 e 10.' };
+  }
+  if (!Number.isInteger(painScore) || painScore < 0 || painScore > 10) {
+    return { error: 'A dor deve ser um número inteiro entre 0 e 10.' };
+  }
+
   const supabase = createClient();
+  const { data: workout } = await supabase.from('workouts').select('athlete_id').eq('id', workoutId).single();
+  if (!workout) return { error: 'Treino não encontrado ou sem permissão.' };
+
   const { error } = await supabase
     .from('workouts')
     .update({
@@ -113,6 +139,24 @@ export async function completeWorkoutFromFile(
 
   if (error) {
     return { error: 'Não foi possível salvar. Tente novamente.' };
+  }
+
+  if (sessionRpe != null) {
+    const internalLoad = Math.round((Number(parsed.durationMin ?? 0) * sessionRpe) * 10) / 10;
+    const { error: feedbackError } = await supabase.from('workout_feedback').upsert(
+      {
+        workout_id: workoutId,
+        athlete_id: workout.athlete_id,
+        session_rpe: sessionRpe,
+        pain_score: painScore,
+        pain_changed_mechanics: changedMechanics,
+        internal_load: internalLoad,
+        notes,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'workout_id' }
+    );
+    if (feedbackError) return { error: 'Treino salvo, mas não foi possível salvar o feedback.' };
   }
 
   revalidatePlan();
